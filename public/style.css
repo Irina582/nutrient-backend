@@ -30,7 +30,6 @@ body {
     flex-direction: column;
 }
 
-/* Остальной CSS остается без изменений */
 .app-header {
     background-color: #259b23;
     padding: 20px 16px 16px;

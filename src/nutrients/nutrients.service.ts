@@ -47,7 +47,7 @@ export class NutrientsService {
       dailyNorm: 30,
       unit: 'г',
       description: 'Нормализует пищеварение и уровень сахара в крови.',
-      status: 'черновик',  // ← ЭТОТ НЕ БУДЕТ В ПЛИТКЕ И ЛЕНТЕ
+      status: 'черновик',  
       imageKey: 'fiber.jpg',
       videoKey: 'fiber.mp4',
       likedByUserIds: [],
@@ -71,7 +71,7 @@ export class NutrientsService {
       dailyNorm: 1000,
       unit: 'мг',
       description: 'Необходим для здоровья костей и зубов.',
-      status: 'удален',  // ← ЭТОТ НЕ БУДЕТ НИГДЕ
+      status: 'удален',  
       imageKey: 'calcium.jpg',
       videoKey: 'calcium.mp4',
       likedByUserIds: [],
@@ -79,7 +79,7 @@ export class NutrientsService {
   ];
 
   private visible(): Nutrient[] {
-    // ТОЛЬКО опубликованные!
+    // только опубликованные
     return this.nutrients.filter((n) => n.status === 'опубликован');
   }
 

@@ -14,19 +14,19 @@
 
         <div class="add-scroll">
             {{#if nutrient}}
-                {{!-- Блок с изображением из черновика --}}
+                
                 <div class="media-block">
                     <span class="media-label">📷 Изображение</span>
                     <img src="http://localhost:9000/media/{{nutrient.imageKey}}" alt="Изображение нутриента" class="preview-media">
                 </div>
 
-                {{!-- Блок с видео из черновика --}}
+                
                 <div class="media-block">
                     <span class="media-label">🎬 Видео</span>
                     <video src="http://localhost:9000/media/{{nutrient.videoKey}}" class="preview-media" controls></video>
                 </div>
 
-                {{!-- Форма с данными из черновика --}}
+                
                 <form class="add-form">
                     <label>Название <input type="text" value="{{nutrient.name}}"></label>
                     <label>Категория <input type="text" value="{{nutrient.category}}"></label>

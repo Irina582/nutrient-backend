@@ -5,7 +5,7 @@ import { NutrientsService } from './nutrients.service';
 export class NutrientsController {
   constructor(private readonly nutrientsService: NutrientsService) {}
 
-  // 1. ПЛИТКА: GET /nutrients?minNorm=...
+  // плитка
   @Get()
   @Render('tile')
   getTile(@Query('minNorm') minNorm?: string) {
@@ -22,7 +22,7 @@ export class NutrientsController {
     };
   }
 
-  // 2. ДОБАВЛЕНИЕ: GET /nutrients/draft
+  // добавление
   @Get('draft')
   @Render('add')
   getDraft() {
@@ -33,7 +33,7 @@ export class NutrientsController {
     };
   }
 
-  // 3. ЛЕНТА (без ID - первый элемент)
+  // лента(без id-первый элемент)
   @Get('feed')
   @Render('feed')
   getFirstFeed() {
@@ -48,7 +48,7 @@ export class NutrientsController {
     };
   }
 
-  // 4. ЛЕНТА (с ID - конкретный элемент или следующий)
+  // лента(с id-конкретный элемент или следующий)
   @Get('feed/:id')
   @Render('feed')
   getFeed(@Param('id') id: string, @Query('next') next?: string) {
