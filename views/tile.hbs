@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{title}}</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <main class="screen tile-screen">
+        <header class="app-header">
+            <form action="/nutrients" method="GET" class="filter-form">
+                <input type="number" name="minNorm" placeholder="Мин. норма (мг/г)" value="{{minNorm}}" step="any" min="0">
+                <button type="submit">Найти</button>
+            </form>
+        </header>
+
+        <div class="tile-grid">
+            {{#each nutrients}}
+            <a href="/nutrients/feed/{{this.id}}" class="card">
+                <img src="http://localhost:9000/media/{{this.imageKey}}" alt="{{this.name}}" class="card-image" loading="lazy">
+                <div class="card-info">
+                    <p class="card-title">{{this.name}}</p>
+                    <p class="card-likes">{{this.likesCount}}</p>
+                </div>
+            </a>
+            {{else}}
+            <p style="grid-column: 1/-1; text-align: center; color: #999; padding: 40px 0;">Нутриенты не найдены</p>
+            {{/each}}
+        </div>
+
+        {{> tabbar}}
+    </main>
+</body>
+</html>

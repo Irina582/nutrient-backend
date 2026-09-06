@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{title}}</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <main class="screen feed-screen">
+        {{#if nutrient}}
+            <div class="feed-media">
+                <video src="http://localhost:9000/media/{{nutrient.videoKey}}" class="feed-video" autoplay loop muted playsinline></video>
+
+                <div class="feed-overlay">
+                    <p class="feed-title">{{nutrient.name}}</p>
+                    <p class="feed-description">{{nutrient.description}}</p>
+                    <p class="feed-norm">Норма: {{nutrient.dailyNorm}} {{nutrient.unit}} · {{nutrient.category}}</p>
+                    <div class="feed-actions">
+                        <span class="feed-likes">❤️ {{likesCount}}</span>
+                        <a href="/nutrients/feed/{{nutrient.id}}?next=true" class="next-button">Следующий →</a>
+                    </div>
+                </div>
+            </div>
+        {{else}}
+            <div class="feed-media" style="display:flex;align-items:center;justify-content:center;color:#fff;background:#1a1a1a;font-size:18px;">
+                Нутриент не найден
+            </div>
+        {{/if}}
+
+        {{> tabbar}}
+    </main>
+</body>
+</html>
