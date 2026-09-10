@@ -10,7 +10,8 @@
     <main class="screen tile-screen">
         <header class="app-header">
             <form action="/nutrients" method="GET" class="filter-form">
-                <input type="number" name="minNorm" placeholder="Мин. норма (мг/г)" value="{{minNorm}}" step="any" min="0">
+                <input type="range" id="normSlider" name="minNorm" min="0" max="150" step="1" value="{{#if minNorm}}{{minNorm}}{{else}}0{{/if}}" title="Минимальная норма">
+                <span class="slider-value" id="sliderValueDisplay">{{#if minNorm}}{{minNorm}}{{else}}0{{/if}}</span>
                 <button type="submit">Найти</button>
             </form>
         </header>
@@ -31,5 +32,15 @@
 
         {{> tabbar}}
     </main>
+
+    <script>
+        // JS для обновления цифры рядом с ползунком
+        const slider = document.getElementById('normSlider');
+        const display = document.getElementById('sliderValueDisplay');
+        
+        slider.addEventListener('input', (e) => {
+            display.innerText = e.target.value;
+        });
+    </script>
 </body>
 </html>
