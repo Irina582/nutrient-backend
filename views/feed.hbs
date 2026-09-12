@@ -10,22 +10,20 @@
     <main class="screen feed-screen">
         {{#if nutrient}}
             <div class="feed-media">
-                <video src="http://localhost:9000/media/{{nutrient.videoKey}}" class="feed-video" autoplay loop muted playsinline></video>
+                <video src="{{defaultVideo nutrient.videoUrl}}" class="feed-video" autoplay loop muted playsinline></video>
 
-                <!-- Правый блок: Лайк, кнопка "Следующий", Норма и Категория -->
                 <div class="feed-actions-right">
                     <span class="feed-likes">❤️ {{likesCount}}</span>
                     <a href="/nutrients/feed/{{nutrient.id}}?next=true" class="next-button">Следующий →</a>
                     <p class="feed-norm">Норма: {{nutrient.dailyNorm}} {{nutrient.unit}}<br>{{nutrient.category}}</p>
                 </div>
 
-                <!-- Нижний блок: Название и описание (с трюком на чекбоксе) -->
                 <div class="feed-overlay">
                     <p class="feed-title">{{nutrient.name}}</p>
-                    
+
                     <div class="desc-container">
                         <input type="checkbox" id="descToggle" class="desc-checkbox">
-                        <div class="desc-text">{{nutrient.description}}</div>
+                        <div class="desc-text">{{nutrient.shortDescription}}</div>
                         <label for="descToggle" class="desc-label"></label>
                     </div>
                 </div>

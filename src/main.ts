@@ -7,17 +7,35 @@ import * as expressHandlebars from 'express-handlebars';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // Настройка статических файлов (CSS)
+  // Статика: /style.css, /defaults/*, /media/*
   app.useStaticAssets(join(__dirname, '..', 'public'));
 
-  // Настройка папки с шаблонами
+  // Папка с шаблонами
   app.setBaseViewsDir(join(__dirname, '..', 'views'));
-  
-  // Настройка Handlebars как шаблонизатора
-  app.engine('hbs', expressHandlebars.engine({
-    extname: 'hbs',
-    defaultLayout: false,
-  }));
+
+  // Handlebars с хелперами для дефолтных медиа
+  app.engine(
+    'hbs',
+    expressHandlebars.engine({
+      extname: 'hbs',
+      defaultLayout: false,
+      partialsDir: join(__dirname, '..', 'views', 'partials'),
+      helpers: {
+        // Если imageUrl пустой — подставляем дефолтную картинку
+        defaultImage: (url: string) => {
+          return url && url.trim() !== ''
+            ? `/media/${url}`
+            : '/defaults/default-image.jpg';
+        },
+        // Если videoUrl пустой — подставляем дефолтное видео
+        defaultVideo: (url: string) => {
+          return url && url.trim() !== ''
+            ? `/media/${url}`
+            : '/defaults/default-video.mp4';
+        },
+      },
+    }),
+  );
   app.setViewEngine('hbs');
 
   await app.listen(3000);

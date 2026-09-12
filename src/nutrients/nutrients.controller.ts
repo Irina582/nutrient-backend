@@ -1,66 +1,105 @@
-import { Controller, Get, Param, Query, Render } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+  Body,
+  Render,
+  Res,
+  HttpStatus,
+} from '@nestjs/common';
+import type { Response } from 'express';
 import { NutrientsService } from './nutrients.service';
+import { CreateNutrientDto } from './dto/create-nutrient.dto';
+import { PublishNutrientDto } from './dto/publish-nutrient.dto';
 
 @Controller('nutrients')
 export class NutrientsController {
   constructor(private readonly nutrientsService: NutrientsService) {}
 
-  // плитка
   @Get()
   @Render('tile')
-  getTile(@Query('minNorm') minNorm?: string) {
+  async getTile(@Query('minNorm') minNorm?: string) {
     const parsedNorm = minNorm ? Number(minNorm) : undefined;
-    const list = this.nutrientsService.findAllVisible(parsedNorm);
-    const nutrientsWithLikes = list.map((n) => ({
-      ...n,
-      likesCount: this.nutrientsService.countLikes(n),
-    }));
+    const nutrients = await this.nutrientsService.findAllVisible(parsedNorm);
     return {
       title: 'Питательные вещества',
       minNorm: minNorm ?? '',
-      nutrients: nutrientsWithLikes,
+      nutrients,
     };
   }
 
-  // добавление
   @Get('draft')
   @Render('add')
-  getDraft() {
-    const draft = this.nutrientsService.findDraft();
+  async getDraft() {
+    const draft = await this.nutrientsService.findDraft();
     return {
       title: 'Добавление',
       nutrient: draft,
     };
   }
 
-  // лента(без id-первый элемент)
   @Get('feed')
   @Render('feed')
-  getFirstFeed() {
-    const item = this.nutrientsService.findFeedItem(undefined, false);
+  async getFirstFeed() {
+    const item = await this.nutrientsService.findFeedItem();
     if (!item) {
       return { title: 'Не найдено', nutrient: null, likesCount: 0 };
     }
-    return {
-      title: item.name,
-      nutrient: item,
-      likesCount: this.nutrientsService.countLikes(item),
-    };
+    const likesCount = await this.nutrientsService.countLikes(item.id);
+    return { title: item.name, nutrient: item, likesCount };
   }
 
-  // лента(с id-конкретный элемент или следующий)
   @Get('feed/:id')
   @Render('feed')
-  getFeed(@Param('id') id: string, @Query('next') next?: string) {
+  async getFeed(@Param('id') id: string, @Query('next') next?: string) {
     const parsedId = Number(id);
-    const item = this.nutrientsService.findFeedItem(parsedId, next === 'true');
+    const item = await this.nutrientsService.findFeedItem(
+      parsedId,
+      next === 'true',
+    );
     if (!item) {
       return { title: 'Не найдено', nutrient: null, likesCount: 0 };
     }
-    return {
-      title: item.name,
-      nutrient: item,
-      likesCount: this.nutrientsService.countLikes(item),
-    };
+    const likesCount = await this.nutrientsService.countLikes(item.id);
+    return { title: item.name, nutrient: item, likesCount };
+  }
+
+  @Post()
+  async create(@Body() dto: CreateNutrientDto, @Res() res: Response) {
+    const nutrient = await this.nutrientsService.create(dto, 1);
+    return res.status(HttpStatus.CREATED).json(nutrient);
+  }
+
+  @Post(':id/publish')
+  async publish(
+    @Param('id') id: string,
+    @Body() dto: PublishNutrientDto,
+    @Res() res: Response,
+  ) {
+    const nutrient = await this.nutrientsService.publish(Number(id), dto);
+    if (!nutrient) {
+      return res.status(HttpStatus.NOT_FOUND).json({ message: 'Не найдено' });
+    }
+    return res.json(nutrient);
+  }
+
+  @Post(':id/delete-cursor')
+  async deleteCursor(@Param('id') id: string, @Res() res: Response) {
+    const ok = await this.nutrientsService.deleteWithCursor(Number(id));
+    if (!ok) {
+      return res.status(HttpStatus.NOT_FOUND).json({ message: 'Не найдено' });
+    }
+    return res.json({ success: true });
+  }
+
+  @Post(':id/soft-delete')
+  async softDelete(@Param('id') id: string, @Res() res: Response) {
+    const ok = await this.nutrientsService.softDelete(Number(id));
+    if (!ok) {
+      return res.status(HttpStatus.NOT_FOUND).json({ message: 'Не найдено' });
+    }
+    return res.json({ success: true });
   }
 }

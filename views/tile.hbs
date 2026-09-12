@@ -30,7 +30,6 @@
                         title="Минимальная норма"
                     >
 
-                    <!-- Риски: 31 шт (0..150 с шагом 5). Каждая 4-я — длинная -->
                     <div class="filter-slider-ticks" aria-hidden="true">
                         <span></span><span></span><span></span><span></span><span></span>
                         <span></span><span></span><span></span><span></span><span></span>
@@ -41,7 +40,6 @@
                         <span></span>
                     </div>
 
-                    <!-- Подписи: 0, 30, 60, 90, 120, 150 — 6 шт -->
                     <div class="filter-slider-scale">
                         <span>0</span>
                         <span>30</span>
@@ -58,7 +56,7 @@
         <div class="tile-grid">
             {{#each nutrients}}
             <a href="/nutrients/feed/{{this.id}}" class="card">
-                <img src="http://localhost:9000/media/{{this.imageKey}}" alt="{{this.name}}" class="card-image" loading="lazy">
+                <img src="{{defaultImage this.imageUrl}}" alt="{{this.name}}" class="card-image" loading="lazy">
                 <div class="card-info">
                     <p class="card-title">{{this.name}}</p>
                     <p class="card-likes">{{this.likesCount}}</p>
