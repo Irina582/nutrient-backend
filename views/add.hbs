@@ -27,17 +27,33 @@
                     <input type="file" accept="video/*" class="file-upload-input" style="margin-top: 12px;">
                 </div>
 
-                <form class="add-form">
-                    <label>Название <input type="text" value="{{nutrient.name}}"></label>
-                    <label>Категория <input type="text" value="{{nutrient.category}}"></label>
+                <form class="add-form" method="POST" action="/nutrients/draft/publish">
+                    <label>Название
+                        <input type="text" name="name" value="{{nutrient.name}}" required>
+                    </label>
+                    <label>Категория
+                        <input type="text" name="category" value="{{nutrient.category}}">
+                    </label>
 
-                    <label>Суточная норма <input type="number" value="{{nutrient.dailyNorm}}" step="any"></label>
-                    <label>Единица измерения <input type="text" value="{{nutrient.unit}}"></label>
+                    <label>Суточная норма
+                        <input type="number" name="dailyNorm" value="{{nutrient.dailyNorm}}" step="any">
+                    </label>
+                    <label>Единица измерения
+                        <input type="text" name="unit" value="{{nutrient.unit}}">
+                    </label>
 
-                    <label>Описание <textarea>{{nutrient.shortDescription}}</textarea></label>
+                    <label>Описание
+                        <textarea name="shortDescription">{{nutrient.shortDescription}}</textarea>
+                    </label>
+
+                    <button type="submit" class="publish-button">ОПУБЛИКОВАТЬ</button>
                 </form>
             {{else}}
                 <p style="text-align:center;color:#999;padding:40px 0;">Черновик не найден</p>
+
+                <form method="POST" action="/nutrients/draft" style="text-align:center;">
+                    <button type="submit" class="publish-button">ДАЛЕЕ</button>
+                </form>
             {{/if}}
         </div>
 
