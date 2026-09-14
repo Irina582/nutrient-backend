@@ -8,16 +8,18 @@ export class NutrientsController {
   // плитка
   @Get()
   @Render('tile')
-  getTile(@Query('minNorm') minNorm?: string) {
-    const parsedNorm = minNorm ? Number(minNorm) : undefined;
-    const list = this.nutrientsService.findAllVisible(parsedNorm);
+  getTile(@Query('minNorm') minNorm?: string, @Query('maxNorm') maxNorm?: string) {
+    const parsedMin = minNorm ? Number(minNorm) : undefined;
+    const parsedMax = maxNorm ? Number(maxNorm) : undefined;
+    const list = this.nutrientsService.findAllVisible(parsedMin, parsedMax);
     const nutrientsWithLikes = list.map((n) => ({
       ...n,
       likesCount: this.nutrientsService.countLikes(n),
     }));
     return {
       title: 'Питательные вещества',
-      minNorm: minNorm ?? '',
+      minNorm: minNorm ?? '0',
+      maxNorm: maxNorm ?? '150',
       nutrients: nutrientsWithLikes,
     };
   }

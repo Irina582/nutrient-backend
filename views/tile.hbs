@@ -12,33 +12,34 @@
             <form action="/nutrients" method="GET" class="filter-form">
                 <div class="filter-slider-box">
                     <div class="filter-slider-header">
-                        <span class="filter-slider-label">Мин. норма:</span>
+                        <span class="filter-slider-label">Норма:</span>
                         <span class="filter-slider-value">
-                            {{#if minNorm}}{{minNorm}}{{else}}все{{/if}}
+                            {{minNorm}} - {{maxNorm}}
                         </span>
                     </div>
 
-                    <input
-                        type="range"
-                        id="normSlider"
-                        name="minNorm"
-                        min="0"
-                        max="150"
-                        step="5"
-                        value="{{#if minNorm}}{{minNorm}}{{else}}0{{/if}}"
-                        class="filter-slider"
-                        title="Минимальная норма"
-                    >
-
-                    <!-- Риски: 31 шт (0..150 с шагом 5). Каждая 4-я — длинная -->
-                    <div class="filter-slider-ticks" aria-hidden="true">
-                        <span></span><span></span><span></span><span></span><span></span>
-                        <span></span><span></span><span></span><span></span><span></span>
-                        <span></span><span></span><span></span><span></span><span></span>
-                        <span></span><span></span><span></span><span></span><span></span>
-                        <span></span><span></span><span></span><span></span><span></span>
-                        <span></span><span></span><span></span><span></span><span></span>
-                        <span></span>
+                    <div class="range-slider-wrapper">
+                        <div class="range-slider-track"></div>
+                        <input
+                            type="range"
+                            name="minNorm"
+                            min="0"
+                            max="150"
+                            step="5"
+                            value="{{minNorm}}"
+                            class="filter-slider"
+                            title="Минимальная норма"
+                        >
+                        <input
+                            type="range"
+                            name="maxNorm"
+                            min="0"
+                            max="150"
+                            step="5"
+                            value="{{maxNorm}}"
+                            class="filter-slider"
+                            title="Максимальная норма"
+                        >
                     </div>
 
                     <!-- Подписи: 0, 30, 60, 90, 120, 150 — 6 шт -->

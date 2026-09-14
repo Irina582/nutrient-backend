@@ -82,10 +82,12 @@ export class NutrientsService {
     return this.nutrients.filter((n) => n.status === 'опубликован');
   }
 
-  findAllVisible(minNorm?: number): Nutrient[] {
-    return this.visible().filter(
-      (n) => (minNorm ? n.dailyNorm >= minNorm : true),
-    );
+  findAllVisible(minNorm?: number, maxNorm?: number): Nutrient[] {
+    return this.visible().filter((n) => {
+      const meetsMin = minNorm !== undefined ? n.dailyNorm >= minNorm : true;
+      const meetsMax = maxNorm !== undefined ? n.dailyNorm <= maxNorm : true;
+      return meetsMin && meetsMax;
+    });
   }
 
   findDraft(): Nutrient | undefined {
