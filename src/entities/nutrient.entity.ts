@@ -16,7 +16,7 @@ export class Nutrient {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ length: 150 })
+  @Column({ length: 150, nullable: true })
   name: string;
 
   @Column({ name: 'short_description', type: 'text', nullable: true })

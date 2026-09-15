@@ -1,5 +1,5 @@
 export class CreateNutrientDto {
-  name: string;
+  name?: string;
   shortDescription?: string;
   dailyNorm?: number;
   unit?: string;
