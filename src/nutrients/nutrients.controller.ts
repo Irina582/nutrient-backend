@@ -18,15 +18,20 @@ import { PublishNutrientDto } from './dto/publish-nutrient.dto';
 export class NutrientsController {
   constructor(private readonly nutrientsService: NutrientsService) {}
 
-  // GET плитка
+  // GET плитка (фильтр по minNorm и maxNorm)
   @Get()
   @Render('tile')
-  async getTile(@Query('minNorm') minNorm?: string) {
-    const parsedNorm = minNorm ? Number(minNorm) : undefined;
-    const nutrients = await this.nutrientsService.findAllVisible(parsedNorm);
+  async getTile(
+    @Query('minNorm') minNorm?: string,
+    @Query('maxNorm') maxNorm?: string,
+  ) {
+    const parsedMin = minNorm !== undefined && minNorm !== '' ? Number(minNorm) : undefined;
+    const parsedMax = maxNorm !== undefined && maxNorm !== '' ? Number(maxNorm) : undefined;
+    const nutrients = await this.nutrientsService.findAllVisible(parsedMin, parsedMax);
     return {
       title: 'Питательные вещества',
-      minNorm: minNorm ?? '',
+      minNorm: minNorm ?? '0',
+      maxNorm: maxNorm ?? '150',
       nutrients,
     };
   }
@@ -36,53 +41,33 @@ export class NutrientsController {
   @Render('add')
   async getDraft() {
     const draft = await this.nutrientsService.findDraft();
-    return {
-      title: 'Добавление',
-      nutrient: draft,
-    };
+    return { title: 'Добавление', nutrient: draft };
   }
 
-  // POST создание нового черновика (кнопка "Далее")
+  // POST создать черновик (кнопка "Далее")
   @Post('draft')
   @Render('add')
   async createDraft() {
-    // Если черновик уже есть — показываем его
     let draft = await this.nutrientsService.findDraft();
     if (!draft) {
-      // Создаём новый черновик через ORM
       draft = await this.nutrientsService.create(
-        {
-          name: 'Новая услуга',
-          shortDescription: '',
-          dailyNorm: 0,
-          unit: '',
-          category: '',
-        },
-        1, // creator_id = 1 (admin)
+        { name: 'Новая услуга', shortDescription: '', dailyNorm: 0, unit: '', category: '' },
+        1,
       );
     }
-    return {
-      title: 'Добавление',
-      nutrient: draft,
-    };
+    return { title: 'Добавление', nutrient: draft };
   }
 
-  // POST публикация черновика (кнопка "Опубликовать")
+  // POST опубликовать черновик (кнопка "Опубликовать")
   @Post('draft/publish')
   @Render('add')
   async publishDraft(@Body() dto: PublishNutrientDto) {
     const draft = await this.nutrientsService.findDraft();
     if (!draft) {
-      return {
-        title: 'Добавление',
-        nutrient: null,
-      };
+      return { title: 'Добавление', nutrient: null };
     }
     await this.nutrientsService.publish(draft.id, dto);
-    return {
-      title: 'Добавление',
-      nutrient: null, // после публикации черновика больше нет
-    };
+    return { title: 'Добавление', nutrient: null };
   }
 
   // GET лента (первый элемент)
@@ -90,9 +75,7 @@ export class NutrientsController {
   @Render('feed')
   async getFirstFeed() {
     const item = await this.nutrientsService.findFeedItem();
-    if (!item) {
-      return { title: 'Не найдено', nutrient: null, likesCount: 0 };
-    }
+    if (!item) return { title: 'Не найдено', nutrient: null, likesCount: 0 };
     const likesCount = await this.nutrientsService.countLikes(item.id);
     return { title: item.name, nutrient: item, likesCount };
   }
@@ -102,25 +85,20 @@ export class NutrientsController {
   @Render('feed')
   async getFeed(@Param('id') id: string, @Query('next') next?: string) {
     const parsedId = Number(id);
-    const item = await this.nutrientsService.findFeedItem(
-      parsedId,
-      next === 'true',
-    );
-    if (!item) {
-      return { title: 'Не найдено', nutrient: null, likesCount: 0 };
-    }
+    const item = await this.nutrientsService.findFeedItem(parsedId, next === 'true');
+    if (!item) return { title: 'Не найдено', nutrient: null, likesCount: 0 };
     const likesCount = await this.nutrientsService.countLikes(item.id);
     return { title: item.name, nutrient: item, likesCount };
   }
 
-  // POST создание услуги (JSON, через ORM) — для Postman
+  // POST создание услуги (JSON, ORM) — для Postman
   @Post()
   async create(@Body() dto: CreateNutrientDto, @Res() res: Response) {
     const nutrient = await this.nutrientsService.create(dto, 1);
     return res.status(HttpStatus.CREATED).json(nutrient);
   }
 
-  // POST публикация через JSON (для Postman)
+  // POST публикация через JSON (ORM) — для Postman
   @Post(':id/publish')
   async publish(
     @Param('id') id: string,
@@ -134,7 +112,7 @@ export class NutrientsController {
     return res.json(nutrient);
   }
 
-  // POST удаление через SQL-курсор
+  // POST удаление через SQL-курсор (сложный запрос)
   @Post(':id/delete-cursor')
   async deleteCursor(@Param('id') id: string, @Res() res: Response) {
     const ok = await this.nutrientsService.deleteWithCursor(Number(id));
@@ -144,7 +122,7 @@ export class NutrientsController {
     return res.json({ success: true });
   }
 
-  // POST логическое удаление (чистый SQL UPDATE)
+  // POST логическое удаление (чистый SQL UPDATE, без ORM)
   @Post(':id/soft-delete')
   async softDelete(@Param('id') id: string, @Res() res: Response) {
     const ok = await this.nutrientsService.softDelete(Number(id));

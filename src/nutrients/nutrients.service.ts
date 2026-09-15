@@ -19,7 +19,8 @@ export class NutrientsService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async findAllVisible(minNorm?: number): Promise<any[]> {
+  // ORM: список опубликованных с фильтром по min/max и подсчётом лайков
+  async findAllVisible(minNorm?: number, maxNorm?: number): Promise<any[]> {
     const qb = this.nutrientRepo
       .createQueryBuilder('n')
       .leftJoin('n.likes', 'l')
@@ -28,8 +29,11 @@ export class NutrientsService {
       .groupBy('n.id')
       .orderBy('n.id', 'ASC');
 
-    if (minNorm) {
+    if (minNorm !== undefined) {
       qb.andWhere('n.dailyNorm >= :minNorm', { minNorm });
+    }
+    if (maxNorm !== undefined) {
+      qb.andWhere('n.dailyNorm <= :maxNorm', { maxNorm });
     }
 
     const raw = await qb.getRawAndEntities();
@@ -51,29 +55,25 @@ export class NutrientsService {
       where: { status: 'опубликован' },
       order: { id: 'ASC' },
     });
-
     if (list.length === 0) return null;
     if (!id) return list[0];
-
     if (next) {
       const idx = list.findIndex((n) => n.id === id);
       if (idx === -1) return list[0];
       return list[idx + 1] ?? list[0];
     }
-
     return list.find((n) => n.id === id) ?? null;
   }
 
   async findDraft(): Promise<Nutrient | null> {
-    return this.nutrientRepo.findOne({
-      where: { status: 'черновик' },
-    });
+    return this.nutrientRepo.findOne({ where: { status: 'черновик' } });
   }
 
   async countLikes(nutrientId: number): Promise<number> {
     return this.likeRepo.count({ where: { nutrientId } });
   }
 
+  // ORM: создание
   async create(dto: CreateNutrientDto, creatorId: number): Promise<Nutrient> {
     const nutrient = this.nutrientRepo.create({
       ...dto,
@@ -83,6 +83,7 @@ export class NutrientsService {
     return this.nutrientRepo.save(nutrient);
   }
 
+  // ORM: публикация
   async publish(id: number, dto: PublishNutrientDto): Promise<Nutrient | null> {
     const nutrient = await this.nutrientRepo.findOne({ where: { id } });
     if (!nutrient) return null;
@@ -97,6 +98,7 @@ export class NutrientsService {
     return this.nutrientRepo.save(nutrient);
   }
 
+  // ЧИСТЫЙ SQL UPDATE (без ORM) — логическое удаление
   async softDelete(id: number): Promise<boolean> {
     const result = await this.dataSource.query(
       `UPDATE nutrients SET status = 'удален' WHERE id = $1`,
@@ -105,6 +107,7 @@ export class NutrientsService {
     return result[1] > 0;
   }
 
+  // СЛОЖНЫЙ ЗАПРОС через SQL-КУРСОР
   async deleteWithCursor(id: number): Promise<boolean> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
