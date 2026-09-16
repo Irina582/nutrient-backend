@@ -360,6 +360,9 @@ body {
     text-shadow: 0 2px 8px rgba(0,0,0,0.5);
 }
 
+/* ============================================
+   ОПИСАНИЕ В ЛЕНТЕ (Ещё / Скрыть)
+   ============================================ */
 .desc-container {
     pointer-events: auto;
     margin-bottom: 12px;
@@ -377,13 +380,17 @@ body {
     overflow: hidden;
     font-size: 14px;
     opacity: 0.9;
-    line-height: 1.4;
+    line-height: 1.45;
     text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    color: #fff;
+    margin: 0;
 }
 
-.desc-checkbox:checked + .desc-text {
+.desc-checkbox:checked ~ .desc-text {
+    display: block;
     -webkit-line-clamp: unset;
     line-clamp: unset;
+    overflow: visible;
 }
 
 .desc-label {
@@ -394,6 +401,7 @@ body {
     display: inline-block;
     margin-top: 4px;
     cursor: pointer;
+    user-select: none;
 }
 
 .desc-label::after {
@@ -538,4 +546,56 @@ video.preview-media {
 .tab-item.active {
     color: #1b7a19;
     font-weight: 700;
+}
+
+
+/* Обёртка карточки + кнопка удаления */
+.card-block {
+    display: flex;
+    flex-direction: column;
+}
+
+.delete-form {
+    margin-top: 8px;
+    display: flex;
+    justify-content: center;
+}
+
+.delete-btn {
+    background: rgba(220, 53, 69, 0.12);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.4);
+    border-radius: 12px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.delete-btn:hover {
+    background: rgba(220, 53, 69, 0.22);
+    color: #b02a37;
+    border-color: rgba(220, 53, 69, 0.7);
+}
+
+.next-btn,
+.publish-btn {
+    margin-top: 12px;
+    padding: 12px;
+    border: none;
+    border-radius: 16px;
+    background: #259b23;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.15s;
+}
+
+.next-btn:hover,
+.publish-btn:hover {
+    background: #1e8a1c;
 }

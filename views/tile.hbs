@@ -42,7 +42,6 @@
                         >
                     </div>
 
-                    <!-- Подписи: 0, 30, 60, 90, 120, 150 — 6 шт -->
                     <div class="filter-slider-scale">
                         <span>0</span>
                         <span>30</span>
@@ -58,15 +57,21 @@
 
         <div class="tile-grid">
             {{#each nutrients}}
-            <a href="/nutrients/feed/{{this.id}}" class="card">
-                <img src="http://localhost:9000/media/{{this.imageKey}}" alt="{{this.name}}" class="card-image" loading="lazy">
-                <div class="card-info">
-                    <p class="card-title">{{this.name}}</p>
-                    <p class="card-likes">{{this.likesCount}}</p>
+                <div class="card-block">
+                    <a href="/nutrients/feed/{{this.id}}" class="card">
+                        <img src="http://localhost:9000/media/{{#if this.imageKey}}{{this.imageKey}}{{else}}default-image.jpg{{/if}}" alt="{{this.name}}" class="card-image" loading="lazy">
+                        <div class="card-info">
+                            <p class="card-title">{{this.name}}</p>
+                            <p class="card-likes">{{this.likesCount}}</p>
+                        </div>
+                    </a>
+                    <form action="/nutrients/delete" method="POST" class="delete-form">
+                        <input type="hidden" name="id" value="{{this.id}}">
+                        <button type="submit" class="delete-btn">Удалить</button>
+                    </form>
                 </div>
-            </a>
             {{else}}
-            <p style="grid-column: 1/-1; text-align: center; color: #999; padding: 40px 0;">Нутриенты не найдены</p>
+                <p style="grid-column: 1/-1; text-align: center; color: #999; padding: 40px 0;">Нутриенты не найдены</p>
             {{/each}}
         </div>
 

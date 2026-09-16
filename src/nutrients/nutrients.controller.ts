@@ -1,21 +1,31 @@
-import { Controller, Get, Param, Query, Render } from '@nestjs/common';
+import {
+  Controller, Get, Post, Param, Query, Render, Body,
+  ParseIntPipe, NotFoundException, Redirect,
+} from '@nestjs/common';
 import { NutrientsService } from './nutrients.service';
 
 @Controller('nutrients')
 export class NutrientsController {
   constructor(private readonly nutrientsService: NutrientsService) {}
 
-  // плитка
+  // GET №1 — плитка
   @Get()
   @Render('tile')
-  getTile(@Query('minNorm') minNorm?: string, @Query('maxNorm') maxNorm?: string) {
+  async getTile(
+    @Query('minNorm') minNorm?: string,
+    @Query('maxNorm') maxNorm?: string,
+  ) {
     const parsedMin = minNorm ? Number(minNorm) : undefined;
     const parsedMax = maxNorm ? Number(maxNorm) : undefined;
-    const list = this.nutrientsService.findAllVisible(parsedMin, parsedMax);
-    const nutrientsWithLikes = list.map((n) => ({
-      ...n,
-      likesCount: this.nutrientsService.countLikes(n),
-    }));
+    const list = await this.nutrientsService.findAllVisible(parsedMin, parsedMax);
+
+    const nutrientsWithLikes = await Promise.all(
+      list.map(async (n) => ({
+        ...n,
+        likesCount: await this.nutrientsService.countLikes(n),
+      })),
+    );
+
     return {
       title: 'Питательные вещества',
       minNorm: minNorm ?? '0',
@@ -24,45 +34,99 @@ export class NutrientsController {
     };
   }
 
-  // добавление
+  // GET №2 — черновик (страница добавления)
   @Get('draft')
   @Render('add')
-  getDraft() {
-    const draft = this.nutrientsService.findDraft();
+  async getDraft() {
+    const draft = await this.nutrientsService.findDraft();
     return {
       title: 'Добавление',
-      nutrient: draft,
+      nutrient: draft ?? null,
     };
   }
 
-  // лента(без id-первый элемент)
+  // GET №3 — лента без id
   @Get('feed')
   @Render('feed')
-  getFirstFeed() {
-    const item = this.nutrientsService.findFeedItem(undefined, false);
+  async getFirstFeed() {
+    const item = await this.nutrientsService.findFeedItem(undefined, false);
     if (!item) {
       return { title: 'Не найдено', nutrient: null, likesCount: 0 };
     }
     return {
       title: item.name,
       nutrient: item,
-      likesCount: this.nutrientsService.countLikes(item),
+      likesCount: await this.nutrientsService.countLikes(item),
     };
   }
 
-  // лента(с id-конкретный элемент или следующий)
+  // GET №3 (продолжение) — лента по id / следующий (использует курсор)
   @Get('feed/:id')
   @Render('feed')
-  getFeed(@Param('id') id: string, @Query('next') next?: string) {
+  async getFeed(@Param('id') id: string, @Query('next') next?: string) {
     const parsedId = Number(id);
-    const item = this.nutrientsService.findFeedItem(parsedId, next === 'true');
+
+    // Если это не next — используем курсор (raw SQL)
+    if (next !== 'true') {
+      const cursorItem = await this.nutrientsService.getNutrientById(parsedId);
+      if (cursorItem) {
+        return {
+          title: cursorItem.name,
+          nutrient: cursorItem,
+          likesCount: await this.nutrientsService.countLikes(cursorItem),
+        };
+      }
+    }
+
+    const item = await this.nutrientsService.findFeedItem(parsedId, next === 'true');
     if (!item) {
       return { title: 'Не найдено', nutrient: null, likesCount: 0 };
     }
     return {
       title: item.name,
       nutrient: item,
-      likesCount: this.nutrientsService.countLikes(item),
+      likesCount: await this.nutrientsService.countLikes(item),
     };
+  }
+
+  // POST №1 — создание карточки (кнопка «Далее») через ORM
+  @Post('create')
+  @Redirect('/nutrients/draft', 302)
+  async createDraft(@Body() body: any) {
+    await this.nutrientsService.createDraft({
+      name: body.name,
+      category: body.category,
+      dailyNorm: body.dailyNorm ? Number(body.dailyNorm) : 0,
+      unit: body.unit,
+      description: body.description,
+      imageKey: body.imageKey || null,
+      videoKey: body.videoKey || null,
+    });
+  }
+
+  // POST №2 — публикация (кнопка «Опубликовать») через ORM
+  @Post('publish')
+  @Redirect('/nutrients', 302)
+  async publish(@Body() body: any) {
+    const id = Number(body.id);
+    if (!isNaN(id)) {
+      await this.nutrientsService.publish(id, {
+        name: body.name,
+        category: body.category,
+        dailyNorm: body.dailyNorm ? Number(body.dailyNorm) : 0,
+        unit: body.unit,
+        description: body.description,
+      });
+    }
+  }
+
+  // POST №3 — мягкое удаление через SQL UPDATE
+  @Post('delete')
+  @Redirect('/nutrients', 302)
+  async delete(@Body('id') id: string) {
+    const parsed = parseInt(id, 10);
+    if (!isNaN(parsed)) {
+      await this.nutrientsService.softDelete(parsed);
+    }
   }
 }

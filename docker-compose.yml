@@ -1,3 +1,5 @@
+name: nutrients-backend
+
 services:
   minio:
     container_name: minio_storage
@@ -13,5 +15,28 @@ services:
       - minio-data:/data
     command: server /data --console-address ":9001"
 
+  postgres:
+    image: postgres:18-alpine
+    container_name: nutrient_postgres
+    environment:
+      POSTGRES_USER: nutrient_user
+      POSTGRES_PASSWORD: nutrient_password
+      POSTGRES_DB: nutrient_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql   
+
+  adminer:
+    image: adminer:latest
+    container_name: nutrient_adminer
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres
+
 volumes:
   minio-data:
+    external: true
+    name: nutrients-backend_minio-data
+  postgres_data:

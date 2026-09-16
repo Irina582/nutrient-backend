@@ -14,30 +14,50 @@
 
         <div class="add-scroll">
             {{#if nutrient}}
-                
+                {{!-- ЧЕРНОВИК ЕСТЬ: форма заполнена, кнопка Опубликовать --}}
                 <div class="media-block">
                     <span class="media-label">📷 Изображение</span>
-                    <img src="http://localhost:9000/media/{{nutrient.imageKey}}" alt="Текущее изображение" class="preview-media">
+                    <img src="http://localhost:9000/media/{{#if nutrient.imageKey}}{{nutrient.imageKey}}{{else}}default-image.jpg{{/if}}" alt="Текущее изображение" class="preview-media">
                     <input type="file" accept="image/*" class="file-upload-input" style="margin-top: 12px;">
                 </div>
 
                 <div class="media-block">
                     <span class="media-label">🎬 Видео</span>
-                    <video src="http://localhost:9000/media/{{nutrient.videoKey}}" class="preview-media" controls></video>
+                    <video src="http://localhost:9000/media/{{#if nutrient.videoKey}}{{nutrient.videoKey}}{{else}}default-video.mp4{{/if}}" class="preview-media" controls></video>
                     <input type="file" accept="video/*" class="file-upload-input" style="margin-top: 12px;">
                 </div>
 
-                <form class="add-form">
-                    <label>Название <input type="text" value="{{nutrient.name}}"></label>
-                    <label>Категория <input type="text" value="{{nutrient.category}}"></label>
-                    
-                    <label>Суточная норма <input type="number" value="{{nutrient.dailyNorm}}" step="any"></label>
-                    <label>Единица измерения <input type="text" value="{{nutrient.unit}}"></label>
-                    
-                    <label>Описание <textarea>{{nutrient.description}}</textarea></label>
+                <form action="/nutrients/publish" method="POST" class="add-form">
+                    <input type="hidden" name="id" value="{{nutrient.id}}">
+                    <label>Название <input type="text" name="name" value="{{nutrient.name}}" required></label>
+                    <label>Категория <input type="text" name="category" value="{{nutrient.category}}" required></label>
+                    <label>Суточная норма <input type="number" name="dailyNorm" value="{{nutrient.dailyNorm}}" step="any" required></label>
+                    <label>Единица измерения <input type="text" name="unit" value="{{nutrient.unit}}" required></label>
+                    <label>Описание <textarea name="description">{{nutrient.description}}</textarea></label>
+                    <button type="submit" class="publish-btn">Опубликовать</button>
                 </form>
             {{else}}
-                <p style="text-align:center;color:#999;padding:40px 0;">Черновик не найден</p>
+                {{!-- ЧЕРНОВИКА НЕТ: пустая форма, кнопка Далее --}}
+                <div class="media-block">
+                    <span class="media-label">📷 Изображение</span>
+                    <img src="http://localhost:9000/media/default-image.jpg" alt="По умолчанию" class="preview-media">
+                    <input type="file" accept="image/*" class="file-upload-input" style="margin-top: 12px;">
+                </div>
+
+                <div class="media-block">
+                    <span class="media-label">🎬 Видео</span>
+                    <video src="http://localhost:9000/media/default-video.mp4" class="preview-media" controls></video>
+                    <input type="file" accept="video/*" class="file-upload-input" style="margin-top: 12px;">
+                </div>
+
+                <form action="/nutrients/create" method="POST" class="add-form">
+                    <label>Название <input type="text" name="name" required></label>
+                    <label>Категория <input type="text" name="category" required></label>
+                    <label>Суточная норма <input type="number" name="dailyNorm" step="any" required></label>
+                    <label>Единица измерения <input type="text" name="unit" required></label>
+                    <label>Описание <textarea name="description"></textarea></label>
+                    <button type="submit" class="next-btn">Далее</button>
+                </form>
             {{/if}}
         </div>
 
