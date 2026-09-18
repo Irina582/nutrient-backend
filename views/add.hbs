@@ -14,48 +14,69 @@
 
         <div class="add-scroll">
             {{#if nutrient}}
-                {{!-- ЧЕРНОВИК ЕСТЬ: форма заполнена, кнопка Опубликовать --}}
+                {{!-- ЧЕРНОВИК ЕСТЬ: название показано (readonly),
+                     показ фото/видео, заполнение категории, нормы, единицы,
+                     описание — внизу. Кнопка «Опубликовать». --}}
+
                 <div class="media-block">
                     <span class="media-label">📷 Изображение</span>
-                    <img src="http://localhost:9000/media/{{#if nutrient.imageKey}}{{nutrient.imageKey}}{{else}}default-image.jpg{{/if}}" alt="Текущее изображение" class="preview-media">
-                    <input type="file" accept="image/*" class="file-upload-input" style="margin-top: 12px;">
+                    {{#if nutrient.imageKey}}
+                        <img src="http://localhost:9000/media/{{nutrient.imageKey}}" alt="Изображение" class="preview-media">
+                    {{else}}
+                        <img src="/img/default-image.jpg" alt="Изображение по умолчанию" class="preview-media">
+                    {{/if}}
                 </div>
 
                 <div class="media-block">
                     <span class="media-label">🎬 Видео</span>
-                    <video src="http://localhost:9000/media/{{#if nutrient.videoKey}}{{nutrient.videoKey}}{{else}}default-video.mp4{{/if}}" class="preview-media" controls></video>
-                    <input type="file" accept="video/*" class="file-upload-input" style="margin-top: 12px;">
+                    {{#if nutrient.videoKey}}
+                        <video src="http://localhost:9000/media/{{nutrient.videoKey}}" class="preview-media" controls></video>
+                    {{else}}
+                        <video src="/img/default-video.mp4" class="preview-media" controls></video>
+                    {{/if}}
                 </div>
 
                 <form action="/nutrients/publish" method="POST" class="add-form">
                     <input type="hidden" name="id" value="{{nutrient.id}}">
-                    <label>Название <input type="text" name="name" value="{{nutrient.name}}" required></label>
-                    <label>Категория <input type="text" name="category" value="{{nutrient.category}}" required></label>
-                    <label>Суточная норма <input type="number" name="dailyNorm" value="{{nutrient.dailyNorm}}" step="any" required></label>
-                    <label>Единица измерения <input type="text" name="unit" value="{{nutrient.unit}}" required></label>
-                    <label>Описание <textarea name="description">{{nutrient.description}}</textarea></label>
+
+                    <label>Название
+                        <input type="text" value="{{nutrient.name}}" readonly>
+                    </label>
+                    <label>Категория
+                        <input type="text" name="category" value="{{nutrient.category}}" required>
+                    </label>
+                    <label>Суточная норма
+                        <input type="number" name="dailyNorm" value="{{nutrient.dailyNorm}}" step="any" required>
+                    </label>
+                    <label>Единица измерения
+                        <input type="text" name="unit" value="{{nutrient.unit}}" required>
+                    </label>
+                    <label>Описание
+                        <textarea name="description" required>{{nutrient.description}}</textarea>
+                    </label>
+
                     <button type="submit" class="publish-btn">Опубликовать</button>
                 </form>
             {{else}}
-                {{!-- ЧЕРНОВИКА НЕТ: пустая форма, кнопка Далее --}}
+                {{!-- ЧЕРНОВИКА НЕТ: только название, фото, видео, кнопка «Далее» --}}
+
                 <div class="media-block">
                     <span class="media-label">📷 Изображение</span>
-                    <img src="http://localhost:9000/media/default-image.jpg" alt="По умолчанию" class="preview-media">
+                    <img src="/img/default-image.jpg" alt="По умолчанию" class="preview-media">
                     <input type="file" accept="image/*" class="file-upload-input" style="margin-top: 12px;">
                 </div>
 
                 <div class="media-block">
                     <span class="media-label">🎬 Видео</span>
-                    <video src="http://localhost:9000/media/default-video.mp4" class="preview-media" controls></video>
+                    <video src="/img/default-video.mp4" class="preview-media" controls></video>
                     <input type="file" accept="video/*" class="file-upload-input" style="margin-top: 12px;">
                 </div>
 
                 <form action="/nutrients/create" method="POST" class="add-form">
-                    <label>Название <input type="text" name="name" required></label>
-                    <label>Категория <input type="text" name="category" required></label>
-                    <label>Суточная норма <input type="number" name="dailyNorm" step="any" required></label>
-                    <label>Единица измерения <input type="text" name="unit" required></label>
-                    <label>Описание <textarea name="description"></textarea></label>
+                    <label>Название
+                        <input type="text" name="name" required>
+                    </label>
+
                     <button type="submit" class="next-btn">Далее</button>
                 </form>
             {{/if}}

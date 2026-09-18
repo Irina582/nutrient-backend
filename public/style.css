@@ -599,3 +599,14 @@ video.preview-media {
 .publish-btn:hover {
     background: #1e8a1c;
 }
+
+/* Readonly-поле (название на странице публикации) */
+.add-form input[readonly] {
+    background: #f0f0f0;
+    color: #666;
+    cursor: default;
+}
+
+.add-form input[readonly]:focus {
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}

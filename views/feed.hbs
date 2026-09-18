@@ -10,7 +10,11 @@
     <main class="screen feed-screen">
         {{#if nutrient}}
             <div class="feed-media">
-                <video src="http://localhost:9000/media/{{#if nutrient.videoKey}}{{nutrient.videoKey}}{{else}}default-video.mp4{{/if}}" class="feed-video" autoplay loop muted playsinline></video>
+                {{#if nutrient.videoKey}}
+                    <video src="http://localhost:9000/media/{{nutrient.videoKey}}" class="feed-video" autoplay loop muted playsinline></video>
+                {{else}}
+                    <video src="/img/default-video.mp4" class="feed-video" autoplay loop muted playsinline></video>
+                {{/if}}
 
                 <div class="feed-actions-right">
                     <span class="feed-likes">❤️ {{likesCount}}</span>

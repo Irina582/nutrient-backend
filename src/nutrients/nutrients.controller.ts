@@ -60,13 +60,12 @@ export class NutrientsController {
     };
   }
 
-  // GET №3 (продолжение) — лента по id / следующий (использует курсор)
+  // GET №3 (продолжение) — лента по id / следующий
   @Get('feed/:id')
   @Render('feed')
   async getFeed(@Param('id') id: string, @Query('next') next?: string) {
     const parsedId = Number(id);
 
-    // Если это не next — используем курсор (raw SQL)
     if (next !== 'true') {
       const cursorItem = await this.nutrientsService.getNutrientById(parsedId);
       if (cursorItem) {
@@ -90,32 +89,32 @@ export class NutrientsController {
   }
 
   // POST №1 — создание карточки (кнопка «Далее») через ORM
+  // На шаге «Далее» заполняется только название.
+  // Остальные поля (категория, описание, норма, единица) — на шаге «Опубликовать».
   @Post('create')
   @Redirect('/nutrients/draft', 302)
   async createDraft(@Body() body: any) {
     await this.nutrientsService.createDraft({
       name: body.name,
-      category: body.category,
-      dailyNorm: body.dailyNorm ? Number(body.dailyNorm) : 0,
-      unit: body.unit,
-      description: body.description,
-      imageKey: body.imageKey || null,
-      videoKey: body.videoKey || null,
+      category: '',
+      dailyNorm: 0,
+      unit: '',
+      description: '',
+      imageKey: null,
+      videoKey: null,
     });
   }
 
-  // POST №2 — публикация (кнопка «Опубликовать») через ORM
   @Post('publish')
   @Redirect('/nutrients', 302)
   async publish(@Body() body: any) {
     const id = Number(body.id);
     if (!isNaN(id)) {
       await this.nutrientsService.publish(id, {
-        name: body.name,
         category: body.category,
+        description: body.description,
         dailyNorm: body.dailyNorm ? Number(body.dailyNorm) : 0,
         unit: body.unit,
-        description: body.description,
       });
     }
   }

@@ -59,7 +59,11 @@
             {{#each nutrients}}
                 <div class="card-block">
                     <a href="/nutrients/feed/{{this.id}}" class="card">
-                        <img src="http://localhost:9000/media/{{#if this.imageKey}}{{this.imageKey}}{{else}}default-image.jpg{{/if}}" alt="{{this.name}}" class="card-image" loading="lazy">
+                        {{#if this.imageKey}}
+                            <img src="http://localhost:9000/media/{{this.imageKey}}" alt="{{this.name}}" class="card-image" loading="lazy">
+                        {{else}}
+                            <img src="/img/default-image.jpg" alt="{{this.name}}" class="card-image" loading="lazy">
+                        {{/if}}
                         <div class="card-info">
                             <p class="card-title">{{this.name}}</p>
                             <p class="card-likes">{{this.likesCount}}</p>

@@ -26,17 +26,17 @@ export class Nutrient {
   status: NutrientStatus;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  imageKey: string;
+  imageKey: string | null;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  videoKey: string;
+  videoKey: string | null;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
   @Column({ type: 'timestamp', nullable: true })
-  formedAt: Date;
+  formedAt: Date | null;
 
   @Column({ type: 'int', nullable: true })
-  creatorId: number;
+  creatorId: number | null;
 }
