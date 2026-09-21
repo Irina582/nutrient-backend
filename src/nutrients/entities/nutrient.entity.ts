@@ -19,8 +19,9 @@ export class Nutrient {
   @Column({ type: 'varchar', length: 20 })
   unit: string;
 
-  @Column({ type: 'text' })
-  description: string;
+  // description — теперь nullable
+  @Column({ type: 'text', nullable: true })
+  description: string | null;
 
   @Column({ type: 'varchar', length: 20, default: 'черновик' })
   status: NutrientStatus;
@@ -37,6 +38,7 @@ export class Nutrient {
   @Column({ type: 'timestamp', nullable: true })
   formedAt: Date | null;
 
-  @Column({ type: 'int', nullable: true })
-  creatorId: number | null;
+  // creatorId — теперь NOT NULL
+  @Column({ type: 'int' })
+  creatorId: number;
 }

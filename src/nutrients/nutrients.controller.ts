@@ -99,7 +99,7 @@ export class NutrientsController {
       category: '',
       dailyNorm: 0,
       unit: '',
-      description: '',
+      description: null,
       imageKey: null,
       videoKey: null,
     });

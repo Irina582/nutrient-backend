@@ -37,20 +37,49 @@ export class NutrientsService {
     return draft ?? undefined;
   }
 
-  /** Лента по id / следующий — через ORM */
+  /** Лента по id / следующий — через ORM, из БД берётся 1 строка */
   async findFeedItem(id?: number, next?: boolean): Promise<Nutrient | undefined> {
-    const list = await this.nutrientRepository.find({
-      where: { status: 'опубликован' },
-      order: { id: 'ASC' },
-    });
-
-    if (!id) return list[0];
-    if (next) {
-      const idx = list.findIndex((n) => n.id === id);
-      if (idx === -1) return list[0];
-      return list[idx + 1] ?? list[0];
+    // 1. Лента без id — самый первый опубликованный
+    if (!id) {
+      const first = await this.nutrientRepository
+        .createQueryBuilder('n')
+        .where('n.status = :status', { status: 'опубликован' })
+        .orderBy('n.id', 'ASC')
+        .limit(1)
+        .getOne();
+      return first ?? undefined;
     }
-    return list.find((n) => n.id === id);
+
+    // 2. Лента с ?next=true — следующий после id
+    if (next) {
+      const nextItem = await this.nutrientRepository
+        .createQueryBuilder('n')
+        .where('n.status = :status', { status: 'опубликован' })
+        .andWhere('n.id > :id', { id })
+        .orderBy('n.id', 'ASC')
+        .limit(1)
+        .getOne();
+
+      if (nextItem) return nextItem;
+
+      // Если после id ничего нет — циклически возвращаемся к первому
+      const first = await this.nutrientRepository
+        .createQueryBuilder('n')
+        .where('n.status = :status', { status: 'опубликован' })
+        .orderBy('n.id', 'ASC')
+        .limit(1)
+        .getOne();
+      return first ?? undefined;
+    }
+
+    // 3. Лента по конкретному id
+    const item = await this.nutrientRepository
+      .createQueryBuilder('n')
+      .where('n.status = :status', { status: 'опубликован' })
+      .andWhere('n.id = :id', { id })
+      .limit(1)
+      .getOne();
+    return item ?? undefined;
   }
 
   /** Количество лайков — через ORM */
