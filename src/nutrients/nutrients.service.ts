@@ -13,7 +13,6 @@ export class NutrientsService {
     private likeRepository: Repository<LikeEntity>,
   ) {}
 
-  /** Плитка: список опубликованных с фильтром по норме — через ORM */
   async findAllVisible(minNorm?: number, maxNorm?: number): Promise<Nutrient[]> {
     const qb = this.nutrientRepository
       .createQueryBuilder('n')
@@ -29,7 +28,6 @@ export class NutrientsService {
     return qb.getMany();
   }
 
-  /** Черновик (не более одного) — через ORM */
   async findDraft(): Promise<Nutrient | undefined> {
     const draft = await this.nutrientRepository.findOne({
       where: { status: 'черновик', creatorId: 1 },
@@ -37,7 +35,6 @@ export class NutrientsService {
     return draft ?? undefined;
   }
 
-  /** Лента по id / следующий — через ORM, из БД берётся 1 строка */
   async findFeedItem(id?: number, next?: boolean): Promise<Nutrient | undefined> {
     // 1. Лента без id — самый первый опубликованный
     if (!id) {
@@ -82,12 +79,10 @@ export class NutrientsService {
     return item ?? undefined;
   }
 
-  /** Количество лайков — через ORM */
   async countLikes(nutrient: Nutrient): Promise<number> {
     return this.likeRepository.count({ where: { nutrientId: nutrient.id } });
   }
 
-  /** Получение одной услуги по id — через ORM */
   async getNutrientById(id: number): Promise<Nutrient | null> {
     return this.nutrientRepository.findOne({
       where: {
@@ -97,7 +92,6 @@ export class NutrientsService {
     });
   }
 
-  /** Мягкое удаление через SQL UPDATE (без ORM) */
   async softDelete(id: number): Promise<void> {
     await this.nutrientRepository.query(
       `UPDATE nutrients SET status = 'удален' WHERE id = $1`,
@@ -105,7 +99,6 @@ export class NutrientsService {
     );
   }
 
-  /** Создание черновика через ORM */
   async createDraft(data: Partial<Nutrient>): Promise<Nutrient> {
     const nutrient = this.nutrientRepository.create({
       ...data,
@@ -115,7 +108,6 @@ export class NutrientsService {
     return this.nutrientRepository.save(nutrient);
   }
 
-  /** Публикация через ORM */
   async publish(id: number, data: Partial<Nutrient>): Promise<Nutrient | null> {
     await this.nutrientRepository.update(
       { id },

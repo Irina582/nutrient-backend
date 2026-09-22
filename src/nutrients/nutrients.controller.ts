@@ -89,8 +89,6 @@ export class NutrientsController {
   }
 
   // POST №1 — создание карточки (кнопка «Далее») через ORM
-  // На шаге «Далее» заполняется только название.
-  // Остальные поля (категория, описание, норма, единица) — на шаге «Опубликовать».
   @Post('create')
   @Redirect('/nutrients/draft', 302)
   async createDraft(@Body() body: any) {
@@ -105,6 +103,7 @@ export class NutrientsController {
     });
   }
 
+  // POST №2 — публикация
   @Post('publish')
   @Redirect('/nutrients', 302)
   async publish(@Body() body: any) {
