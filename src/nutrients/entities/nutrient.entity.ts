@@ -38,7 +38,6 @@ export class Nutrient {
   @Column({ type: 'timestamp', nullable: true })
   formedAt: Date | null;
 
-  // FK на users.id — каскадное удаление запрещено
   @Column({ type: 'int' })
   creatorId: number;
 
