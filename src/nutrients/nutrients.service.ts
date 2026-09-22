@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Not } from 'typeorm';
 import { Nutrient } from './entities/nutrient.entity';
 import { Like as LikeEntity } from './entities/like.entity';
 
@@ -87,13 +87,14 @@ export class NutrientsService {
     return this.likeRepository.count({ where: { nutrientId: nutrient.id } });
   }
 
-  /** Получение одной услуги по id через КУРСОР (raw SQL) */
+  /** Получение одной услуги по id — через ORM */
   async getNutrientById(id: number): Promise<Nutrient | null> {
-    const rows = await this.nutrientRepository.query(
-      `SELECT * FROM nutrients WHERE id = $1 AND status <> 'удален'`,
-      [id],
-    );
-    return rows[0] ?? null;
+    return this.nutrientRepository.findOne({
+      where: {
+        id,
+        status: Not('удален'),
+      },
+    });
   }
 
   /** Мягкое удаление через SQL UPDATE (без ORM) */
