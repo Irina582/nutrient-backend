@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import type { User } from './user.entity';
 
 export type NutrientStatus = 'черновик' | 'опубликован' | 'удален';
 
@@ -19,7 +20,6 @@ export class Nutrient {
   @Column({ type: 'varchar', length: 20 })
   unit: string;
 
-  // description — теперь nullable
   @Column({ type: 'text', nullable: true })
   description: string | null;
 
@@ -38,7 +38,11 @@ export class Nutrient {
   @Column({ type: 'timestamp', nullable: true })
   formedAt: Date | null;
 
-  // creatorId — теперь NOT NULL
+  // FK на users.id — каскадное удаление запрещено
   @Column({ type: 'int' })
   creatorId: number;
+
+  @ManyToOne('User', { onDelete: 'RESTRICT' })
+  @JoinColumn({ name: 'creatorId' })
+  creator: User;
 }
