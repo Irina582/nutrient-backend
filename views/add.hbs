@@ -38,9 +38,6 @@
                     <label>Название
                         <input type="text" value="{{nutrient.name}}" readonly>
                     </label>
-                    <label>Категория
-                        <input type="text" name="category" value="{{nutrient.category}}" required>
-                    </label>
                     <label>Суточная норма
                         <input type="number" name="dailyNorm" value="{{nutrient.dailyNorm}}" step="any" required>
                     </label>
@@ -54,8 +51,6 @@
                     <button type="submit" class="publish-btn">Опубликовать</button>
                 </form>
             {{else}}
-                {{!-- ЧЕРНОВИКА НЕТ: только название, фото, видео, кнопка «Далее» --}}
-
                 <div class="media-block">
                     <span class="media-label">📷 Изображение</span>
                     <img src="/img/default-image.jpg" alt="По умолчанию" class="preview-media">

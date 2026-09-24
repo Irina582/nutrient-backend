@@ -85,7 +85,6 @@ body {
     transform: translateX(-5px);
 }
 
-/* Обновленные стили для двойного слайдера */
 .range-slider-wrapper {
     position: relative;
     width: 100%;
@@ -149,7 +148,6 @@ body {
     transform: scale(1.15);
 }
 
-/* Подписи: 0, 30, 60, 90, 120, 150 */
 .filter-slider-scale {
     position: relative;
     height: 14px;
@@ -177,7 +175,6 @@ body {
 .filter-slider-scale span:nth-child(5) { left: calc(8px + (100% - 16px) * 0.8); }
 .filter-slider-scale span:nth-child(6) { left: calc(8px + (100% - 16px) * 1.0); }
 
-/* Кнопка «НАЙТИ» */
 .filter-form button {
     padding: 8px 12px;
     background-color: #eceef1;
@@ -294,52 +291,73 @@ body {
     object-fit: cover;
 }
 
+/* Правый блок в ленте: жёсткая фиксация по top и height,
+   чтобы при смене карточки не «дышал» вверх-вниз */
 .feed-actions-right {
     position: absolute;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
+    right: 16px;
+    top: 380px;                /* фиксированная позиция сверху, а не % */
+    width: 76px;
+    height: 150px;             /* фиксированная высота — блок не меняет размер */
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
-    gap: 16px;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
     z-index: 10;
 }
 
 .feed-likes {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
     color: #fff;
     text-shadow: 0 2px 8px rgba(0,0,0,0.8);
-    padding: 4px 0;
+    text-align: center;
+    width: 100%;
+    white-space: nowrap;       /* лайк всегда в одну строку */
+    overflow: hidden;
 }
 
-.next-button {
-    display: inline-block;
-    background-color: #259b23;
-    color: #fff;
-    padding: 8px 14px;
-    border-radius: 10px;
+/* Стрелка вниз — переход к следующему нутриенту */
+.next-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background-color: rgba(37, 155, 35, 0.55);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+    transition: background-color 0.2s, transform 0.2s;
     text-decoration: none;
-    font-weight: 600;
-    font-size: 12px;
-    transition: all 0.2s;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    white-space: nowrap;
+    flex-shrink: 0;
 }
 
-.next-button:hover {
-    background-color: #1e8a1c;
-    transform: scale(0.96);
+.next-arrow svg {
+    width: 22px;
+    height: 22px;
+    display: block;
 }
 
+.next-arrow:hover {
+    background-color: rgba(37, 155, 35, 0.85);
+    transform: scale(1.08);
+}
+
+/* Норма — заметная, но всегда в одну строку, чтобы не менять высоту блока */
 .feed-norm {
-    font-size: 13px;
-    opacity: 0.85;
-    text-shadow: 0 1px 4px rgba(0,0,0,0.5);
-    text-align: right;
-    line-height: 1.4;
-    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffffff;
+    opacity: 1;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.6);
+    text-align: center;
+    line-height: 1.35;
+    width: 100%;
+    letter-spacing: 0.2px;
+    white-space: nowrap;       /* не переносится на 2 строки */
+    overflow: hidden;
+    text-overflow: ellipsis;   /* если не влезет — обрежется с «…» */
 }
 
 .feed-overlay {
@@ -548,8 +566,9 @@ video.preview-media {
     font-weight: 700;
 }
 
-
-/* Обёртка карточки + кнопка удаления */
+/* ============================================
+   ОБЁРТКА КАРТОЧКИ + КНОПКА УДАЛЕНИЯ
+   ============================================ */
 .card-block {
     display: flex;
     flex-direction: column;
@@ -562,22 +581,21 @@ video.preview-media {
 }
 
 .delete-btn {
-    background: rgba(220, 53, 69, 0.12);
-    color: #dc3545;
-    border: 1px solid rgba(220, 53, 69, 0.4);
-    border-radius: 12px;
-    padding: 8px 16px;
+    margin-top: 0;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 16px;
+    background: #259b23;
+    color: #fff;
+    font-weight: 700;
     font-size: 13px;
-    font-weight: 600;
     cursor: pointer;
     width: 100%;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    transition: background 0.15s;
 }
 
 .delete-btn:hover {
-    background: rgba(220, 53, 69, 0.22);
-    color: #b02a37;
-    border-color: rgba(220, 53, 69, 0.7);
+    background: #1e8a1c;
 }
 
 .next-btn,

@@ -94,7 +94,6 @@ export class NutrientsController {
   async createDraft(@Body() body: any) {
     await this.nutrientsService.createDraft({
       name: body.name,
-      category: '',
       dailyNorm: 0,
       unit: '',
       description: null,
@@ -110,7 +109,6 @@ export class NutrientsController {
     const id = Number(body.id);
     if (!isNaN(id)) {
       await this.nutrientsService.publish(id, {
-        category: body.category,
         description: body.description,
         dailyNorm: body.dailyNorm ? Number(body.dailyNorm) : 0,
         unit: body.unit,

@@ -11,9 +11,6 @@ export class Nutrient {
   @Column({ type: 'varchar', length: 100 })
   name: string;
 
-  @Column({ type: 'varchar', length: 100 })
-  category: string;
-
   @Column({ type: 'float' })
   dailyNorm: number;
 
