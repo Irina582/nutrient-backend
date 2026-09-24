@@ -628,3 +628,26 @@ video.preview-media {
 .add-form input[readonly]:focus {
     box-shadow: 0 1px 4px rgba(0,0,0,0.05);
 }
+
+/* Пустое обязательное поле — красная рамка */
+.add-form input:invalid,
+.add-form textarea:invalid {
+    box-shadow: 0 0 0 2px #dc3545, 0 0 8px rgba(220, 53, 69, 0.35);
+}
+
+/* При фокусе на пустом — рамка более выраженная */
+.add-form input:invalid:focus,
+.add-form textarea:invalid:focus {
+    box-shadow: 0 0 0 3px #dc3545, 0 0 12px rgba(220, 53, 69, 0.5);
+}
+
+/* Валидное заполненное поле в фокусе — зелёная рамка */
+.add-form input:valid:focus,
+.add-form textarea:valid:focus {
+    box-shadow: 0 0 0 2px rgba(37, 155, 35, 0.45);
+}
+
+/* Readonly-поле не должно подсвечиваться как невалидное */
+.add-form input[readonly]:invalid {
+    box-shadow: none;
+}

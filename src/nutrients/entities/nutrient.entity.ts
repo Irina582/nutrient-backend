@@ -11,11 +11,11 @@ export class Nutrient {
   @Column({ type: 'varchar', length: 100 })
   name: string;
 
-  @Column({ type: 'float' })
-  dailyNorm: number;
+  @Column({ type: 'float', nullable: true })
+  dailyNorm: number | null;
 
-  @Column({ type: 'varchar', length: 20 })
-  unit: string;
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  unit: string | null;
 
   @Column({ type: 'text', nullable: true })
   description: string | null;
@@ -23,11 +23,11 @@ export class Nutrient {
   @Column({ type: 'varchar', length: 20, default: 'черновик' })
   status: NutrientStatus;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  imageKey: string | null;
+  @Column({ type: 'varchar', length: 255 })
+  imageKey: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  videoKey: string | null;
+  @Column({ type: 'varchar', length: 255 })
+  videoKey: string;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

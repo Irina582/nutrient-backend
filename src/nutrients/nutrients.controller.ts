@@ -88,33 +88,33 @@ export class NutrientsController {
     };
   }
 
-  // POST №1 — создание карточки (кнопка «Далее») через ORM
-  @Post('create')
-  @Redirect('/nutrients/draft', 302)
-  async createDraft(@Body() body: any) {
-    await this.nutrientsService.createDraft({
-      name: body.name,
-      dailyNorm: 0,
-      unit: '',
-      description: null,
-      imageKey: null,
-      videoKey: null,
+// POST №1 — создание карточки (кнопка «Далее»)
+@Post('create')
+@Redirect('/nutrients/draft', 302)
+async createDraft(@Body() body: any) {
+  await this.nutrientsService.createDraft({
+    name: body.name,
+    dailyNorm: null,
+    unit: null,
+    description: null,
+    imageKey: '',
+    videoKey: '',
+  });
+}
+
+// POST №2 — публикация
+@Post('publish')
+@Redirect('/nutrients', 302)
+async publish(@Body() body: any) {
+  const id = Number(body.id);
+  if (!isNaN(id)) {
+    await this.nutrientsService.publish(id, {
+      description: body.description || null,
+      dailyNorm: body.dailyNorm ? Number(body.dailyNorm) : null,
+      unit: body.unit || null,
     });
   }
-
-  // POST №2 — публикация
-  @Post('publish')
-  @Redirect('/nutrients', 302)
-  async publish(@Body() body: any) {
-    const id = Number(body.id);
-    if (!isNaN(id)) {
-      await this.nutrientsService.publish(id, {
-        description: body.description,
-        dailyNorm: body.dailyNorm ? Number(body.dailyNorm) : 0,
-        unit: body.unit,
-      });
-    }
-  }
+}
 
   // POST №3 — мягкое удаление через SQL UPDATE
   @Post('delete')
