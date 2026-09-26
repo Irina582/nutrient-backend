@@ -1,32 +1,21 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { join } from 'path';
-import * as expressHandlebars from 'express-handlebars';
-import { Request, Response, NextFunction } from 'express';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create(AppModule);
 
-  // Логгер входящих HTTP-запросов (для отладки и скринов на защите)
-  app.use((req: Request, res: Response, next: NextFunction) => {
-    console.log(`>>> ${req.method} ${req.url}`);
-    next();
-  });
+  app.setGlobalPrefix('api');
 
-  // Настройка статических файлов (CSS)
-  app.useStaticAssets(join(__dirname, '..', 'public'));
-
-  // Настройка папки с шаблонами
-  app.setBaseViewsDir(join(__dirname, '..', 'views'));
-
-  // Настройка Handlebars как шаблонизатора
-  app.engine('hbs', expressHandlebars.engine({
-    extname: 'hbs',
-    defaultLayout: false,
-  }));
-  app.setViewEngine('hbs');
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   await app.listen(3000);
+  console.log('Application is running on: http://localhost:3000/api');
 }
 bootstrap();

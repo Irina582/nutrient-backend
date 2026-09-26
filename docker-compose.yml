@@ -10,7 +10,6 @@ services:
     environment:
       MINIO_ROOT_USER: root
       MINIO_ROOT_PASSWORD: rootpassword
-      MINIO_CONSOLE_ADDRESS: ":9001"
     volumes:
       - minio-data:/data
     command: server /data --console-address ":9001"
@@ -25,7 +24,7 @@ services:
     ports:
       - "5434:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql   
+      - postgres_data:/var/lib/postgresql
 
   adminer:
     image: adminer:latest
@@ -37,6 +36,4 @@ services:
 
 volumes:
   minio-data:
-    external: true
-    name: nutrients-backend_minio-data
   postgres_data:

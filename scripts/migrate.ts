@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { DataSource } from 'typeorm';
 import { Nutrient } from '../src/nutrients/entities/nutrient.entity';
 import { Like } from '../src/nutrients/entities/like.entity';

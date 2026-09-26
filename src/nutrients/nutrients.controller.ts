@@ -1,128 +1,102 @@
 import {
-  Controller, Get, Post, Param, Query, Render, Body,
-  ParseIntPipe, NotFoundException, Redirect,
+  Controller, Get, Post, Put, Delete, Param, Query, Body,
+  ParseIntPipe, UseInterceptors, UploadedFiles, BadRequestException,
+  HttpCode, HttpStatus,
 } from '@nestjs/common';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { NutrientsService } from './nutrients.service';
+import { CreateNutrientDto } from './dto/create-nutrient.dto';
+import { NutrientFiltersDto } from './dto/nutrient-filters.dto';
+import { NutrientResponseDto } from './dto/nutrient-response.dto';
 
 @Controller('nutrients')
 export class NutrientsController {
   constructor(private readonly nutrientsService: NutrientsService) {}
 
-  // GET №1 — плитка
+  // GET /api/nutrients?search=&minNorm=&maxNorm=
   @Get()
-  @Render('tile')
-  async getTile(
-    @Query('minNorm') minNorm?: string,
-    @Query('maxNorm') maxNorm?: string,
-  ) {
-    const parsedMin = minNorm ? Number(minNorm) : undefined;
-    const parsedMax = maxNorm ? Number(maxNorm) : undefined;
-    const list = await this.nutrientsService.findAllVisible(parsedMin, parsedMax);
-
-    const nutrientsWithLikes = await Promise.all(
-      list.map(async (n) => ({
-        ...n,
-        likesCount: await this.nutrientsService.countLikes(n),
-      })),
-    );
-
-    return {
-      title: 'Питательные вещества',
-      minNorm: minNorm ?? '0',
-      maxNorm: maxNorm ?? '150',
-      nutrients: nutrientsWithLikes,
-    };
+  async findAll(@Query() filters: NutrientFiltersDto): Promise<NutrientResponseDto[]> {
+    return this.nutrientsService.findAll(filters);
   }
 
-  // GET №2 — черновик (страница добавления)
-  @Get('draft')
-  @Render('add')
-  async getDraft() {
-    const draft = await this.nutrientsService.findDraft();
-    return {
-      title: 'Добавление',
-      nutrient: draft ?? null,
-    };
-  }
-
-  // GET №3 — лента без id
+  // GET /api/nutrients/feed
   @Get('feed')
-  @Render('feed')
-  async getFirstFeed() {
-    const item = await this.nutrientsService.findFeedItem(undefined, false);
-    if (!item) {
-      return { title: 'Не найдено', nutrient: null, likesCount: 0 };
-    }
-    return {
-      title: item.name,
-      nutrient: item,
-      likesCount: await this.nutrientsService.countLikes(item),
-    };
+  async getFeed(): Promise<NutrientResponseDto> {
+    return this.nutrientsService.findFeed();
   }
 
-  // GET №3 (продолжение) — лента по id / следующий
+  // GET /api/nutrients/feed/:id?next=true
   @Get('feed/:id')
-  @Render('feed')
-  async getFeed(@Param('id') id: string, @Query('next') next?: string) {
-    const parsedId = Number(id);
-
-    if (next !== 'true') {
-      const cursorItem = await this.nutrientsService.getNutrientById(parsedId);
-      if (cursorItem) {
-        return {
-          title: cursorItem.name,
-          nutrient: cursorItem,
-          likesCount: await this.nutrientsService.countLikes(cursorItem),
-        };
-      }
-    }
-
-    const item = await this.nutrientsService.findFeedItem(parsedId, next === 'true');
-    if (!item) {
-      return { title: 'Не найдено', nutrient: null, likesCount: 0 };
-    }
-    return {
-      title: item.name,
-      nutrient: item,
-      likesCount: await this.nutrientsService.countLikes(item),
-    };
+  async getFeedById(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('next') next?: string,
+  ): Promise<NutrientResponseDto> {
+    return this.nutrientsService.findFeed(id, next === 'true');
   }
 
-// POST №1 — создание карточки (кнопка «Далее»)
-@Post('create')
-@Redirect('/nutrients/draft', 302)
-async createDraft(@Body() body: any) {
-  await this.nutrientsService.createDraft({
-    name: body.name,
-    dailyNorm: null,
-    unit: null,
-    description: null,
-    imageKey: '',
-    videoKey: '',
-  });
-}
-
-// POST №2 — публикация
-@Post('publish')
-@Redirect('/nutrients', 302)
-async publish(@Body() body: any) {
-  const id = Number(body.id);
-  if (!isNaN(id)) {
-    await this.nutrientsService.publish(id, {
-      description: body.description || null,
-      dailyNorm: body.dailyNorm ? Number(body.dailyNorm) : null,
-      unit: body.unit || null,
-    });
+  // GET /api/nutrients/draft
+  @Get('draft')
+  async getDraft(): Promise<NutrientResponseDto | null> {
+    return this.nutrientsService.findDraft();
   }
-}
 
-  // POST №3 — мягкое удаление через SQL UPDATE
-  @Post('delete')
-  @Redirect('/nutrients', 302)
-  async delete(@Body('id') id: string) {
-    const parsed = parseInt(id, 10);
-    if (!isNaN(parsed)) {
-      await this.nutrientsService.softDelete(parsed);
-    }
+  // GET /api/nutrients/:id
+  @Get(':id')
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<NutrientResponseDto> {
+    return this.nutrientsService.findOne(id);
+  }
+
+  // POST /api/nutrients — multipart/form-data с полями image и video
+  @Post()
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'image', maxCount: 1 },
+        { name: 'video', maxCount: 1 },
+      ],
+      {
+        storage: memoryStorage(),
+        limits: { fileSize: 50 * 1024 * 1024 },
+        fileFilter: (req, file, callback) => {
+          if (file.fieldname === 'image' && !file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
+            return callback(new BadRequestException('Только изображения'), false);
+          }
+          if (file.fieldname === 'video' && !file.mimetype.match(/\/(mp4|webm|ogg)$/)) {
+            return callback(new BadRequestException('Только видео'), false);
+          }
+          callback(null, true);
+        },
+      },
+    ),
+  )
+  async create(
+    @Body() dto: CreateNutrientDto,
+    @UploadedFiles() files: { image?: Express.Multer.File[]; video?: Express.Multer.File[] },
+  ): Promise<NutrientResponseDto> {
+    return this.nutrientsService.createDraft(dto, files);
+  }
+
+  // PUT /api/nutrients/:id/publish — без тела
+  @Put(':id/publish')
+  async publish(@Param('id', ParseIntPipe) id: number): Promise<NutrientResponseDto> {
+    return this.nutrientsService.publish(id);
+  }
+
+  // DELETE /api/nutrients/:id → 204
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    await this.nutrientsService.softDelete(id);
+  }
+
+  // POST /api/nutrients/:id/like → 204
+  @Post(':id/like')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async like(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('value') value: number,
+  ): Promise<void> {
+    await this.nutrientsService.toggleLike(id, value);
   }
 }
