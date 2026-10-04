@@ -13,7 +13,6 @@ export class UsersService {
   ) {}
 
   // POST /api/users/register — реально создаёт пользователя в БД.
-  // В ЛР4 добавится хеширование пароля (bcrypt).
   async register(dto: CreateUserDto): Promise<UserResponseDto> {
     const existing = await this.userRepository.findOne({
       where: { username: dto.username },
@@ -34,7 +33,6 @@ export class UsersService {
 
   // POST /api/users/auth — заглушка для ЛР4.
   // Сейчас проверяет логин/пароль напрямую и возвращает данные пользователя.
-  // В ЛР4 заменится на выдачу JWT/создание сессии в Redis.
   async auth(dto: CreateUserDto): Promise<UserResponseDto> {
     const user = await this.userRepository.findOne({
       where: { username: dto.username, password: dto.password },
@@ -46,8 +44,7 @@ export class UsersService {
   }
 
   // POST /api/users/deauth — заглушка для ЛР4.
-  // Сейчас ничего не делает (нет сессий). В ЛР4 будет удалять сессию из Redis/JWT из blacklist.
   async deauth(): Promise<void> {
-    // Заглушка. В ЛР4 здесь будет очистка сессии.
+    // Заглушка
   }
 }
