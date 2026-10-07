@@ -5,6 +5,7 @@ import { Nutrient } from './entities/nutrient.entity';
 import { Like as LikeEntity } from './entities/like.entity';
 import { MinioService } from './minio.service';
 import { CreateNutrientDto } from './dto/create-nutrient.dto';
+import { PublishNutrientDto } from './dto/publish-nutrient.dto';
 import { NutrientFiltersDto } from './dto/nutrient-filters.dto';
 import { NutrientResponseDto } from './dto/nutrient-response.dto';
 import { getCurrentCreatorId } from '../common/current-user';
@@ -39,17 +40,10 @@ export class NutrientsService {
     return Promise.all(nutrients.map((n) => this.toResponseDto(n)));
   }
 
-  // GET /api/nutrients/feed — первая опубликованная
-  // GET /api/nutrients/feed/:id?next=true — следующая после id, с зацикливанием
-  async findFeed(id?: number, next?: boolean): Promise<NutrientResponseDto> {
+  async findFeed(id: number, next: boolean): Promise<NutrientResponseDto> {
     let nutrient: Nutrient | null = null;
 
-    if (!id) {
-      nutrient = await this.nutrientRepository.findOne({
-        where: { status: 'опубликован' },
-        order: { id: 'ASC' },
-      });
-    } else if (next) {
+    if (next) {
       nutrient = await this.nutrientRepository
         .createQueryBuilder('n')
         .where('n.status = :status', { status: 'опубликован' })
@@ -57,7 +51,6 @@ export class NutrientsService {
         .orderBy('n.id', 'ASC')
         .getOne();
 
-      // зацикливание: если после id ничего нет — берём первую
       if (!nutrient) {
         nutrient = await this.nutrientRepository.findOne({
           where: { status: 'опубликован' },
@@ -136,13 +129,20 @@ export class NutrientsService {
     return this.toResponseDto(saved);
   }
 
-  // PUT /api/nutrients/:id/publish — смена статуса БЕЗ ТЕЛА запроса
-  async publish(id: number): Promise<NutrientResponseDto> {
+  // PUT /api/nutrients/:id/publish
+  async publish(id: number, dto: PublishNutrientDto): Promise<NutrientResponseDto> {
     const nutrient = await this.nutrientRepository.findOne({
       where: { id, status: 'черновик', creatorId: getCurrentCreatorId() },
     });
     if (!nutrient) {
       throw new NotFoundException('Черновик не найден');
+    }
+
+    nutrient.dailyNorm = dto.dailyNorm;
+    nutrient.unit = dto.unit;
+
+    if (dto.description !== undefined) {
+      nutrient.description = dto.description;
     }
 
     nutrient.status = 'опубликован';
@@ -152,6 +152,7 @@ export class NutrientsService {
     return this.toResponseDto(saved);
   }
 
+  // DELETE /api/nutrients/:id — soft delete через ORM
   async softDelete(id: number): Promise<void> {
     const result = await this.nutrientRepository.update(
       { id, status: Not('удален') },
@@ -189,13 +190,22 @@ export class NutrientsService {
     }
   }
 
-  // Преобразование entity → DTO с генерацией signed url и подсчётом лайков
+  // Преобразование entity → DTO
   private async toResponseDto(nutrient: Nutrient): Promise<NutrientResponseDto> {
     const imageUrl = await this.minioService.getSignedUrl(nutrient.imageKey);
     const videoUrl = await this.minioService.getSignedUrl(nutrient.videoKey);
+
     const likesCount = await this.likeRepository.count({
       where: { nutrientId: nutrient.id },
     });
+
+    const existingLike = await this.likeRepository.findOne({
+      where: {
+        userId: getCurrentCreatorId(),
+        nutrientId: nutrient.id,
+      },
+    });
+    const isLiked: 0 | 1 = existingLike ? 1 : 0;
 
     return {
       id: nutrient.id,
@@ -206,6 +216,7 @@ export class NutrientsService {
       imageKey: imageUrl || nutrient.imageKey,
       videoKey: videoUrl || nutrient.videoKey,
       likesCount,
+      isLiked,
       createdAt: nutrient.createdAt,
       formedAt: nutrient.formedAt,
       creatorId: nutrient.creatorId,

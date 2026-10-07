@@ -1,22 +1,7 @@
-import { IsString, IsOptional, IsNumber, Min, MinLength } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsString, MinLength } from 'class-validator';
 
 export class CreateNutrientDto {
   @IsString()
   @MinLength(3, { message: 'Название должно быть не менее 3 символов' })
   name: string;
-
-  @IsOptional()
-  @IsString()
-  description?: string;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  dailyNorm?: number;
-
-  @IsOptional()
-  @IsString()
-  unit?: string;
 }

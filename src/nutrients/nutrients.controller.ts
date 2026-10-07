@@ -7,6 +7,7 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { NutrientsService } from './nutrients.service';
 import { CreateNutrientDto } from './dto/create-nutrient.dto';
+import { PublishNutrientDto } from './dto/publish-nutrient.dto';
 import { NutrientFiltersDto } from './dto/nutrient-filters.dto';
 import { NutrientResponseDto } from './dto/nutrient-response.dto';
 
@@ -20,13 +21,9 @@ export class NutrientsController {
     return this.nutrientsService.findAll(filters);
   }
 
-  // GET /api/nutrients/feed
-  @Get('feed')
-  async getFeed(): Promise<NutrientResponseDto> {
-    return this.nutrientsService.findFeed();
-  }
-
-  // GET /api/nutrients/feed/:id?next=true
+  // GET /api/nutrients/feed/:id           — один нутриент по id
+  // GET /api/nutrients/feed/:id?next=true — следующий после id
+  // GET /api/nutrients/feed               — НЕ существует (404)
   @Get('feed/:id')
   async getFeedById(
     @Param('id', ParseIntPipe) id: number,
@@ -47,7 +44,7 @@ export class NutrientsController {
     return this.nutrientsService.findOne(id);
   }
 
-  // POST /api/nutrients — multipart/form-data с полями image и video
+  // POST /api/nutrients — только name, image, video
   @Post()
   @UseInterceptors(
     FileFieldsInterceptor(
@@ -77,10 +74,13 @@ export class NutrientsController {
     return this.nutrientsService.createDraft(dto, files);
   }
 
-  // PUT /api/nutrients/:id/publish — без тела
+  // PUT /api/nutrients/:id/publish — принимает PublishNutrientDto
   @Put(':id/publish')
-  async publish(@Param('id', ParseIntPipe) id: number): Promise<NutrientResponseDto> {
-    return this.nutrientsService.publish(id);
+  async publish(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: PublishNutrientDto,
+  ): Promise<NutrientResponseDto> {
+    return this.nutrientsService.publish(id, dto);
   }
 
   // DELETE /api/nutrients/:id → 204
