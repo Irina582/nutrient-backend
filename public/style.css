@@ -296,14 +296,14 @@ body {
 .feed-actions-right {
     position: absolute;
     right: 16px;
-    top: 380px;                /* фиксированная позиция сверху, а не % */
-    width: 76px;
-    height: 150px;             /* фиксированная высота — блок не меняет размер */
+    top: 340px;                /* чуть выше, чтобы вместить увеличенный текст */
+    width: 90px;               /* шире, чтобы крупная норма помещалась */
+    height: 170px;             /* выше — под увеличенный шрифт */
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 14px;
+    gap: 16px;
     z-index: 10;
 }
 
@@ -314,7 +314,7 @@ body {
     text-shadow: 0 2px 8px rgba(0,0,0,0.8);
     text-align: center;
     width: 100%;
-    white-space: nowrap;       /* лайк всегда в одну строку */
+    white-space: nowrap;
     overflow: hidden;
 }
 
@@ -344,20 +344,19 @@ body {
     transform: scale(1.08);
 }
 
-/* Норма — заметная, но всегда в одну строку, чтобы не менять высоту блока */
+/* Норма — УВЕЛИЧЕННЫЙ шрифт, сопоставим с заголовком ленты */
 .feed-norm {
-    font-size: 11px;
+    font-size: 14px;         
     font-weight: 700;
     color: #ffffff;
     opacity: 1;
     text-shadow: 0 2px 6px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.6);
     text-align: center;
-    line-height: 1.35;
+    line-height: 1.3;
     width: 100%;
-    letter-spacing: 0.2px;
-    white-space: nowrap;       /* не переносится на 2 строки */
-    overflow: hidden;
-    text-overflow: ellipsis;   /* если не влезет — обрежется с «…» */
+    letter-spacing: 0.3px;
+    white-space: normal;       
+    word-break: break-word;
 }
 
 .feed-overlay {
