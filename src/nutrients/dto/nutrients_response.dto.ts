@@ -1,4 +1,4 @@
-export class NutrientResponseDto {
+export class NutrientsResponseDto {
   id: number;
   name: string;
   description: string | null;
@@ -7,7 +7,7 @@ export class NutrientResponseDto {
   imageKey: string;
   videoKey: string;
   likesCount: number;
-  isLiked: 0 | 1;    
+  isLiked: 0 | 1;
   createdAt: Date;
   formedAt: Date | null;
   creatorId: number;

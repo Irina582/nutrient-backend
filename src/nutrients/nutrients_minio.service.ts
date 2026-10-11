@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import * as Minio from 'minio';
 
 @Injectable()
-export class MinioService {
+export class NutrientsMinioService {
   private minioClient: Minio.Client;
   private bucketName: string;
 
@@ -26,10 +26,10 @@ export class MinioService {
       const exists = await this.minioClient.bucketExists(this.bucketName);
       if (!exists) {
         await this.minioClient.makeBucket(this.bucketName, 'us-east-1');
-        console.log(`Бакет "${this.bucketName}" создан в MinIO`);
+        console.log(`Бакет "${this.bucketName}" создан`);
       }
     } catch (error) {
-      console.error('Ошибка при инициализации бакета MinIO:', (error as Error).message);
+      console.error('Ошибка MinIO:', (error as Error).message);
     }
   }
 
@@ -50,12 +50,11 @@ export class MinioService {
 
   async getSignedUrl(fileName: string | null): Promise<string | null> {
     if (!fileName || fileName === '') return null;
-
     const expiresIn = 7 * 24 * 60 * 60;
     try {
       return await this.minioClient.presignedGetObject(this.bucketName, fileName, expiresIn);
     } catch (error) {
-      console.error('Ошибка при генерации подписанной ссылки:', (error as Error).message);
+      console.error('Ошибка генерации ссылки:', (error as Error).message);
       return null;
     }
   }
@@ -65,7 +64,7 @@ export class MinioService {
     try {
       await this.minioClient.removeObject(this.bucketName, fileName);
     } catch (error) {
-      console.error('Ошибка при удалении файла из MinIO:', (error as Error).message);
+      console.error('Ошибка удаления файла:', (error as Error).message);
       throw new InternalServerErrorException('Не удалось удалить файл');
     }
   }

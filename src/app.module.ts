@@ -1,29 +1,41 @@
 import { Module } from '@nestjs/common';
+import { SequelizeModule } from '@nestjs/sequelize';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { AppController } from './app.controller';
+import { NutrientsUser } from './nutrients_user/nutrients_user.model';
+import { Nutrients } from './nutrients/nutrients.model';
+import { NutrientsLike } from './nutrients/nutrients_like.model';
+import { NutrientsUserModule } from './nutrients_user/nutrients_user.module';
+import { AuthModule } from './auth/auth.module';
 import { NutrientsModule } from './nutrients/nutrients.module';
-import { UsersModule } from './users/users.module';
+import { SessionModule } from './session/session.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    TypeOrmModule.forRootAsync({
+    SequelizeModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        type: 'postgres',
+        dialect: 'postgres',
         host: config.get('DB_HOST', 'localhost'),
         port: parseInt(config.get('DB_PORT', '5434'), 10),
         username: config.get('DB_USERNAME'),
         password: config.get('DB_PASSWORD'),
         database: config.get('DB_DATABASE'),
-        autoLoadEntities: true,
-        synchronize: false,
-        logging: true,
+        models: [NutrientsUser, Nutrients, NutrientsLike],
+        autoLoadModels: true,
+        synchronize: false,   // ← ГЛАВНОЕ: БД уже есть, схему не трогаем
+        define: {
+          timestamps: false,  // timestamps: false
+        },
       }),
     }),
+    NutrientsUserModule,
+    AuthModule,
     NutrientsModule,
-    UsersModule,
+    SessionModule,
   ],
+  controllers: [AppController],
 })
 export class AppModule {}

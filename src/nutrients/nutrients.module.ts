@@ -1,15 +1,21 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { NutrientsController } from './nutrients.controller';
+import { SequelizeModule } from '@nestjs/sequelize';
+import { Nutrients } from './nutrients.model';
+import { NutrientsLike } from './nutrients_like.model';
 import { NutrientsService } from './nutrients.service';
-import { Nutrient } from './entities/nutrient.entity';
-import { Like } from './entities/like.entity';
-import { User } from './entities/user.entity';
-import { MinioService } from './minio.service';
+import { NutrientsController } from './nutrients.controller';
+import { NutrientsMinioService } from './nutrients_minio.service';
+import { AuthModule } from '../auth/auth.module';
+import { NutrientsUserModule } from '../nutrients_user/nutrients_user.module'; 
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Nutrient, Like, User])],
+  imports: [
+    SequelizeModule.forFeature([Nutrients, NutrientsLike]),
+    AuthModule,
+     NutrientsUserModule,
+  ],
+  providers: [NutrientsService, NutrientsMinioService],
   controllers: [NutrientsController],
-  providers: [NutrientsService, MinioService],
+  exports: [NutrientsService],
 })
 export class NutrientsModule {}

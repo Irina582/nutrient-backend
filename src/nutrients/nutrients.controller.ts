@@ -1,51 +1,58 @@
 import {
   Controller, Get, Post, Put, Delete, Param, Query, Body,
   ParseIntPipe, UseInterceptors, UploadedFiles, BadRequestException,
-  HttpCode, HttpStatus,
+  HttpCode, HttpStatus, UseGuards, Req,
 } from '@nestjs/common';
+import { Request } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
+import { ApiOperation, ApiCookieAuth } from '@nestjs/swagger';
 import { NutrientsService } from './nutrients.service';
-import { CreateNutrientDto } from './dto/create-nutrient.dto';
-import { PublishNutrientDto } from './dto/publish-nutrient.dto';
-import { NutrientFiltersDto } from './dto/nutrient-filters.dto';
-import { NutrientResponseDto } from './dto/nutrient-response.dto';
+import { NutrientsCreateDto } from './dto/nutrients_create.dto';
+import { NutrientsPublishDto } from './dto/nutrients_publish.dto';
+import { NutrientsFiltersDto } from './dto/nutrients_filters.dto';
+import { NutrientsResponseDto } from './dto/nutrients_response.dto';
+import { SessionGuard } from '../auth/guards/session.guard'; // Убедись, что путь к Guard правильный
 
-@Controller('nutrients')
+@Controller('api/nutrients')
 export class NutrientsController {
   constructor(private readonly nutrientsService: NutrientsService) {}
 
-  // GET /api/nutrients?search=&minNorm=&maxNorm=
   @Get()
-  async findAll(@Query() filters: NutrientFiltersDto): Promise<NutrientResponseDto[]> {
+  @ApiOperation({ summary: 'Получение списка всех опубликованных нутриентов' })
+  async findAll(@Query() filters: NutrientsFiltersDto): Promise<NutrientsResponseDto[]> {
     return this.nutrientsService.findAll(filters);
   }
 
-  // GET /api/nutrients/feed/:id           — один нутриент по id
-  // GET /api/nutrients/feed/:id?next=true — следующий после id
-  // GET /api/nutrients/feed               — НЕ существует (404)
   @Get('feed/:id')
+  @ApiOperation({ summary: 'Получение ленты нутриентов (по ID)' })
   async getFeedById(
     @Param('id', ParseIntPipe) id: number,
     @Query('next') next?: string,
-  ): Promise<NutrientResponseDto> {
+  ): Promise<NutrientsResponseDto> {
     return this.nutrientsService.findFeed(id, next === 'true');
   }
 
-  // GET /api/nutrients/draft
   @Get('draft')
-  async getDraft(): Promise<NutrientResponseDto | null> {
-    return this.nutrientsService.findDraft();
+  @UseGuards(SessionGuard)
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Получение черновика авторизованного пользователя' })
+  async getDraft(
+    @Req() req: Request & { session: { userId: number } },
+  ): Promise<NutrientsResponseDto | null> {
+    return this.nutrientsService.findDraft(req.session.userId);
   }
 
-  // GET /api/nutrients/:id
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number): Promise<NutrientResponseDto> {
+  @ApiOperation({ summary: 'Получение конкретного нутриента по ID' })
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<NutrientsResponseDto> {
     return this.nutrientsService.findOne(id);
   }
 
-  // POST /api/nutrients — только name, image, video
   @Post()
+  @UseGuards(SessionGuard)
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Добавление нового нутриента (сохранение в черновик)' })
   @UseInterceptors(
     FileFieldsInterceptor(
       [
@@ -68,35 +75,47 @@ export class NutrientsController {
     ),
   )
   async create(
-    @Body() dto: CreateNutrientDto,
+    @Body() dto: NutrientsCreateDto,
     @UploadedFiles() files: { image?: Express.Multer.File[]; video?: Express.Multer.File[] },
-  ): Promise<NutrientResponseDto> {
-    return this.nutrientsService.createDraft(dto, files);
+    @Req() req: Request & { session: { userId: number } },
+  ): Promise<NutrientsResponseDto> {
+    return this.nutrientsService.createDraft(dto, files, req.session.userId);
   }
 
-  // PUT /api/nutrients/:id/publish — принимает PublishNutrientDto
   @Put(':id/publish')
+  @UseGuards(SessionGuard)
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Публикация черновика нутриента' })
   async publish(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: PublishNutrientDto,
-  ): Promise<NutrientResponseDto> {
-    return this.nutrientsService.publish(id, dto);
+    @Body() dto: NutrientsPublishDto,
+    @Req() req: Request & { session: { userId: number } },
+  ): Promise<NutrientsResponseDto> {
+    return this.nutrientsService.publish(id, dto, req.session.userId);
   }
 
-  // DELETE /api/nutrients/:id → 204
   @Delete(':id')
+  @UseGuards(SessionGuard)
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Логическое удаление нутриента (soft delete)' })
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
-    await this.nutrientsService.softDelete(id);
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: Request & { session: { userId: number } },
+  ): Promise<void> {
+    await this.nutrientsService.softDelete(id, req.session.userId);
   }
 
-  // POST /api/nutrients/:id/like → 204
   @Post(':id/like')
+  @UseGuards(SessionGuard)
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Поставить (1) или убрать (0) лайк нутриенту' })
   @HttpCode(HttpStatus.NO_CONTENT)
   async like(
     @Param('id', ParseIntPipe) id: number,
     @Body('value') value: number,
+    @Req() req: Request & { session: { userId: number } },
   ): Promise<void> {
-    await this.nutrientsService.toggleLike(id, value);
+    await this.nutrientsService.toggleLike(id, value, req.session.userId);
   }
 }
