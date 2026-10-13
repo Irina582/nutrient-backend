@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AppController } from './app.controller';
 import { NutrientsUser } from './nutrients_user/nutrients_user.model';
 import { Nutrients } from './nutrients/nutrients.model';
 import { NutrientsLike } from './nutrients/nutrients_like.model';
@@ -25,9 +24,9 @@ import { SessionModule } from './session/session.module';
         database: config.get('DB_DATABASE'),
         models: [NutrientsUser, Nutrients, NutrientsLike],
         autoLoadModels: true,
-        synchronize: false,   // ← ГЛАВНОЕ: БД уже есть, схему не трогаем
+        synchronize: false,
         define: {
-          timestamps: false,  // timestamps: false
+          timestamps: false,
         },
       }),
     }),
@@ -36,6 +35,6 @@ import { SessionModule } from './session/session.module';
     NutrientsModule,
     SessionModule,
   ],
-  controllers: [AppController],
+  controllers: [],
 })
 export class AppModule {}

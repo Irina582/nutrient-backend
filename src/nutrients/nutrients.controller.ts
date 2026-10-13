@@ -3,7 +3,7 @@ import {
   ParseIntPipe, UseInterceptors, UploadedFiles, BadRequestException,
   HttpCode, HttpStatus, UseGuards, Req,
 } from '@nestjs/common';
-import { Request } from '@nestjs/common';
+import type { Request } from 'express';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { ApiOperation, ApiCookieAuth } from '@nestjs/swagger';
@@ -12,25 +12,43 @@ import { NutrientsCreateDto } from './dto/nutrients_create.dto';
 import { NutrientsPublishDto } from './dto/nutrients_publish.dto';
 import { NutrientsFiltersDto } from './dto/nutrients_filters.dto';
 import { NutrientsResponseDto } from './dto/nutrients_response.dto';
-import { SessionGuard } from '../auth/guards/session.guard'; // Убедись, что путь к Guard правильный
+import { SessionGuard } from '../auth/guards/session.guard';
+import { SessionService } from '../session/session.service';
 
 @Controller('api/nutrients')
 export class NutrientsController {
-  constructor(private readonly nutrientsService: NutrientsService) {}
+  constructor(
+    private readonly nutrientsService: NutrientsService,
+    private readonly sessionService: SessionService,
+  ) {}
 
   @Get()
-  @ApiOperation({ summary: 'Получение списка всех опубликованных нутриентов' })
-  async findAll(@Query() filters: NutrientsFiltersDto): Promise<NutrientsResponseDto[]> {
-    return this.nutrientsService.findAll(filters);
+  @ApiOperation({ summary: 'Получение списка опубликованных нутриентов с фильтрацией' })
+  async findAll(
+    @Query() filters: NutrientsFiltersDto,
+    @Req() req: Request,
+  ): Promise<NutrientsResponseDto[]> {
+    let userId: number | null = null;
+    const sessionId = req.cookies?.sessionId;
+    if (sessionId) {
+      userId = await this.sessionService.getUserId(sessionId);
+    }
+    return this.nutrientsService.findAll(filters, userId);
   }
 
   @Get('feed/:id')
-  @ApiOperation({ summary: 'Получение ленты нутриентов (по ID)' })
+  @ApiOperation({ summary: 'Получение ленты (открытие карточки или следующей)' })
   async getFeedById(
     @Param('id', ParseIntPipe) id: number,
+    @Req() req: Request,
     @Query('next') next?: string,
   ): Promise<NutrientsResponseDto> {
-    return this.nutrientsService.findFeed(id, next === 'true');
+    let userId: number | null = null;
+    const sessionId = req.cookies?.sessionId;
+    if (sessionId) {
+      userId = await this.sessionService.getUserId(sessionId);
+    }
+    return this.nutrientsService.findFeed(id, next === 'true', userId);
   }
 
   @Get('draft')
@@ -43,16 +61,10 @@ export class NutrientsController {
     return this.nutrientsService.findDraft(req.session.userId);
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Получение конкретного нутриента по ID' })
-  async findOne(@Param('id', ParseIntPipe) id: number): Promise<NutrientsResponseDto> {
-    return this.nutrientsService.findOne(id);
-  }
-
   @Post()
   @UseGuards(SessionGuard)
   @ApiCookieAuth()
-  @ApiOperation({ summary: 'Добавление нового нутриента (сохранение в черновик)' })
+  @ApiOperation({ summary: 'Добавление нового нутриента (черновика) с медиа' })
   @UseInterceptors(
     FileFieldsInterceptor(
       [
@@ -97,7 +109,7 @@ export class NutrientsController {
   @Delete(':id')
   @UseGuards(SessionGuard)
   @ApiCookieAuth()
-  @ApiOperation({ summary: 'Логическое удаление нутриента (soft delete)' })
+  @ApiOperation({ summary: 'Логическое удаление нутриента' })
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(
     @Param('id', ParseIntPipe) id: number,
@@ -109,7 +121,7 @@ export class NutrientsController {
   @Post(':id/like')
   @UseGuards(SessionGuard)
   @ApiCookieAuth()
-  @ApiOperation({ summary: 'Поставить (1) или убрать (0) лайк нутриенту' })
+  @ApiOperation({ summary: 'Управление лайками (0 или 1)' })
   @HttpCode(HttpStatus.NO_CONTENT)
   async like(
     @Param('id', ParseIntPipe) id: number,

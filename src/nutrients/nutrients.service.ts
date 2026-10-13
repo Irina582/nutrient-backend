@@ -19,7 +19,7 @@ export class NutrientsService {
     private minioService: NutrientsMinioService,
   ) {}
 
-  async findAll(filters: NutrientsFiltersDto): Promise<NutrientsResponseDto[]> {
+  async findAll(filters: NutrientsFiltersDto, userId: number | null): Promise<NutrientsResponseDto[]> {
     const where: any = { status: 'опубликован' };
 
     if (filters.search) {
@@ -33,10 +33,10 @@ export class NutrientsService {
     }
 
     const nutrients = await this.nutrientsModel.findAll({ where });
-    return Promise.all(nutrients.map((n) => this.toResponseDto(n, null)));
+    return Promise.all(nutrients.map((n) => this.toResponseDto(n, userId)));
   }
 
-  async findFeed(id: number, next: boolean): Promise<NutrientsResponseDto> {
+  async findFeed(id: number, next: boolean, userId: number | null): Promise<NutrientsResponseDto> {
     let nutrient: Nutrients | null = null;
 
     if (next) {
@@ -57,7 +57,7 @@ export class NutrientsService {
     }
 
     if (!nutrient) throw new NotFoundException('Нутриент не найден');
-    return this.toResponseDto(nutrient, null);
+    return this.toResponseDto(nutrient, userId);
   }
 
   async findDraft(userId: number): Promise<NutrientsResponseDto | null> {
@@ -65,14 +65,6 @@ export class NutrientsService {
       where: { status: 'черновик', creatorId: userId },
     });
     return draft ? this.toResponseDto(draft, userId) : null;
-  }
-
-  async findOne(id: number): Promise<NutrientsResponseDto> {
-    const nutrient = await this.nutrientsModel.findOne({
-      where: { id, status: { [Op.ne]: 'удален' } },
-    });
-    if (!nutrient) throw new NotFoundException(`Нутриент с ID ${id} не найден`);
-    return this.toResponseDto(nutrient, null);
   }
 
   async createDraft(
@@ -195,6 +187,7 @@ export class NutrientsService {
       videoKey: videoUrl || nutrient.videoKey,
       likesCount,
       isLiked,
+      isCreator: userId === nutrient.creatorId ? 1 : 0,
       createdAt: nutrient.createdAt,
       formedAt: nutrient.formedAt,
       creatorId: nutrient.creatorId,

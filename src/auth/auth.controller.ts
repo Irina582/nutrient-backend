@@ -16,7 +16,7 @@ export class AuthController {
   }
 
   @Post('login')
-  @ApiOperation({ summary: 'Авторизация пользователя (создание сессии)' })
+  @ApiOperation({ summary: 'Аутентификация пользователя (создание сессии)' })
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: express.Response,

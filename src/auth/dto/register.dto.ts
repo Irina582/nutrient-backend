@@ -9,6 +9,6 @@ export class RegisterDto {
 
   @ApiProperty({ example: 'nutrient123' })
   @IsString()
-  @MinLength(3, { message: 'Пароль должен быть не менее 3 символов' })
+  @MinLength(3, { message: 'Название должно быть не менее 3 символов' })
   password: string;
 }

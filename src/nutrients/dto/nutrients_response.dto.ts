@@ -8,6 +8,7 @@ export class NutrientsResponseDto {
   videoKey: string;
   likesCount: number;
   isLiked: 0 | 1;
+  isCreator: 0 | 1;
   createdAt: Date;
   formedAt: Date | null;
   creatorId: number;
