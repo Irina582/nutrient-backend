@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { SequelizeModule } from '@nestjs/sequelize';
-import { NutrientsUser } from './nutrients_user.model';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { NutrientsUser } from './nutrients_user.entity';
 import { NutrientsUserService } from './nutrients_user.service';
 
 @Module({
-  imports: [SequelizeModule.forFeature([NutrientsUser])],
+  imports: [TypeOrmModule.forFeature([NutrientsUser])],
   providers: [NutrientsUserService],
   exports: [NutrientsUserService],
 })

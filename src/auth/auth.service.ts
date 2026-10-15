@@ -12,8 +12,8 @@ export class AuthService {
 
   async register(username: string, password: string) {
     const existing = await this.nutrientsUserService.findByUsername(username);
-    if (existing) throw new ConflictException('Пользователь уже существует');
-    // ─── русская роль по умолчанию ───
+    if (existing) throw new ConflictException();
+    
     return this.nutrientsUserService.create({
       username,
       password,
@@ -24,7 +24,7 @@ export class AuthService {
   async login(username: string, password: string) {
     const user = await this.nutrientsUserService.findByUsername(username);
     if (!user || user.password !== password) {
-      throw new UnauthorizedException('Неверные учётные данные');
+      throw new UnauthorizedException();
     }
 
     const sessionId = uuidv4();
@@ -41,9 +41,9 @@ export class AuthService {
 
   async validateSession(sessionId: string) {
     const userId = await this.sessionService.getUserId(sessionId);
-    if (!userId) throw new UnauthorizedException('Сессия недействительна');
+    if (!userId) throw new UnauthorizedException();
     const user = await this.nutrientsUserService.findById(userId);
-    if (!user) throw new UnauthorizedException('Пользователь не найден');
+    if (!user) throw new UnauthorizedException();
     return user;
   }
 }

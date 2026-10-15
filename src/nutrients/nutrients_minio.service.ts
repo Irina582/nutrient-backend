@@ -65,7 +65,7 @@ export class NutrientsMinioService {
       await this.minioClient.removeObject(this.bucketName, fileName);
     } catch (error) {
       console.error('Ошибка удаления файла:', (error as Error).message);
-      throw new InternalServerErrorException('Не удалось удалить файл');
+      throw new InternalServerErrorException();
     }
   }
 }

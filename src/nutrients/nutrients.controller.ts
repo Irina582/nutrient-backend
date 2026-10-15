@@ -76,10 +76,10 @@ export class NutrientsController {
         limits: { fileSize: 50 * 1024 * 1024 },
         fileFilter: (req, file, callback) => {
           if (file.fieldname === 'image' && !file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
-            return callback(new BadRequestException('Только изображения'), false);
+            return callback(new BadRequestException(), false);
           }
           if (file.fieldname === 'video' && !file.mimetype.match(/\/(mp4|webm|ogg)$/)) {
-            return callback(new BadRequestException('Только видео'), false);
+            return callback(new BadRequestException(), false);
           }
           callback(null, true);
         },

@@ -19,17 +19,17 @@ export class SessionGuard implements CanActivate {
     const sessionId = req.cookies?.sessionId;
 
     if (!sessionId) {
-      throw new UnauthorizedException('Нет sessionId в куках');
+      throw new UnauthorizedException();
     }
 
     const userId = await this.sessionService.getUserId(sessionId);
     if (!userId) {
-      throw new UnauthorizedException('Сессия недействительна или истекла');
+      throw new UnauthorizedException();
     }
 
     const user = await this.nutrientsUserService.findById(userId);
     if (!user) {
-      throw new UnauthorizedException('Пользователь не найден');
+      throw new UnauthorizedException();
     }
 
     req.session = { userId: user.id };

@@ -2,8 +2,8 @@ export class NutrientsResponseDto {
   id: number;
   name: string;
   description: string | null;
-  dailyNorm: number | null;
-  unit: string | null;
+  dailyNorm: number;
+  unit: string;
   imageKey: string;
   videoKey: string;
   likesCount: number;

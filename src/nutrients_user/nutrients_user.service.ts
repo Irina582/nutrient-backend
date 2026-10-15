@@ -1,23 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
-import { NutrientsUser } from './nutrients_user.model';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { NutrientsUser } from './nutrients_user.entity';
 
 @Injectable()
 export class NutrientsUserService {
   constructor(
-    @InjectModel(NutrientsUser)
-    private nutrientsUserModel: typeof NutrientsUser,
+    @InjectRepository(NutrientsUser)
+    private nutrientsUserRepository: Repository<NutrientsUser>,
   ) {}
 
   async create(userData: Partial<NutrientsUser>): Promise<NutrientsUser> {
-    return this.nutrientsUserModel.create(userData as any);
+    const user = this.nutrientsUserRepository.create(userData);
+    return this.nutrientsUserRepository.save(user);
   }
 
   async findByUsername(username: string): Promise<NutrientsUser | null> {
-    return this.nutrientsUserModel.findOne({ where: { username } });
+    return this.nutrientsUserRepository.findOne({ where: { username } });
   }
 
   async findById(id: number): Promise<NutrientsUser | null> {
-    return this.nutrientsUserModel.findByPk(id);
+    return this.nutrientsUserRepository.findOne({ where: { id } });
   }
 }

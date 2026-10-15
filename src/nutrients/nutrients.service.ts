@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
-import { Op } from 'sequelize';
-import { Nutrients } from './nutrients.model';
-import { NutrientsLike } from './nutrients_like.model';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, ILike, MoreThanOrEqual, LessThanOrEqual, Not, MoreThan } from 'typeorm';
+import { Nutrients } from './nutrients.entity';
+import { NutrientsLike } from './nutrients_like.entity';
 import { NutrientsMinioService } from './nutrients_minio.service';
 import { NutrientsCreateDto } from './dto/nutrients_create.dto';
 import { NutrientsPublishDto } from './dto/nutrients_publish.dto';
@@ -12,56 +12,55 @@ import { NutrientsResponseDto } from './dto/nutrients_response.dto';
 @Injectable()
 export class NutrientsService {
   constructor(
-    @InjectModel(Nutrients)
-    private nutrientsModel: typeof Nutrients,
-    @InjectModel(NutrientsLike)
-    private nutrientsLikeModel: typeof NutrientsLike,
+    @InjectRepository(Nutrients)
+    private nutrientsRepository: Repository<Nutrients>,
+    @InjectRepository(NutrientsLike)
+    private nutrientsLikeRepository: Repository<NutrientsLike>,
     private minioService: NutrientsMinioService,
   ) {}
 
   async findAll(filters: NutrientsFiltersDto, userId: number | null): Promise<NutrientsResponseDto[]> {
-    const where: any = { status: 'опубликован' };
-
+    const qb = this.nutrientsRepository.createQueryBuilder('n');
+    qb.where('n.status = :status', { status: 'опубликован' });
     if (filters.search) {
-      where.name = { [Op.iLike]: `%${filters.search}%` };
+      qb.andWhere('n.name ILIKE :search', { search: `%${filters.search}%` });
     }
     if (filters.minNorm !== undefined) {
-      where.dailyNorm = { ...where.dailyNorm, [Op.gte]: filters.minNorm };
+      qb.andWhere('n.dailyNorm >= :minNorm', { minNorm: filters.minNorm });
     }
     if (filters.maxNorm !== undefined) {
-      where.dailyNorm = { ...where.dailyNorm, [Op.lte]: filters.maxNorm };
+      qb.andWhere('n.dailyNorm <= :maxNorm', { maxNorm: filters.maxNorm });
     }
-
-    const nutrients = await this.nutrientsModel.findAll({ where });
-    return Promise.all(nutrients.map((n) => this.toResponseDto(n, userId)));
+    const nutrients = await qb.getMany();
+    return Promise.all(nutrients.map((n_item) => this.toResponseDto(n_item, userId)));
   }
 
   async findFeed(id: number, next: boolean, userId: number | null): Promise<NutrientsResponseDto> {
     let nutrient: Nutrients | null = null;
 
     if (next) {
-      nutrient = await this.nutrientsModel.findOne({
-        where: { status: 'опубликован', id: { [Op.gt]: id } },
-        order: [['id', 'ASC']],
+      nutrient = await this.nutrientsRepository.findOne({
+        where: { status: 'опубликован', id: MoreThan(id) },
+        order: { id: 'ASC' },
       });
       if (!nutrient) {
-        nutrient = await this.nutrientsModel.findOne({
+        nutrient = await this.nutrientsRepository.findOne({
           where: { status: 'опубликован' },
-          order: [['id', 'ASC']],
+          order: { id: 'ASC' },
         });
       }
     } else {
-      nutrient = await this.nutrientsModel.findOne({
+      nutrient = await this.nutrientsRepository.findOne({
         where: { id, status: 'опубликован' },
       });
     }
 
-    if (!nutrient) throw new NotFoundException('Нутриент не найден');
+    if (!nutrient) throw new NotFoundException();
     return this.toResponseDto(nutrient, userId);
   }
 
   async findDraft(userId: number): Promise<NutrientsResponseDto | null> {
-    const draft = await this.nutrientsModel.findOne({
+    const draft = await this.nutrientsRepository.findOne({
       where: { status: 'черновик', creatorId: userId },
     });
     return draft ? this.toResponseDto(draft, userId) : null;
@@ -72,11 +71,11 @@ export class NutrientsService {
     files: { image?: Express.Multer.File[]; video?: Express.Multer.File[] },
     userId: number,
   ): Promise<NutrientsResponseDto> {
-    const existingDraft = await this.nutrientsModel.findOne({
+    const existingDraft = await this.nutrientsRepository.findOne({
       where: { status: 'черновик', creatorId: userId },
     });
     if (existingDraft) {
-      throw new BadRequestException('У пользователя уже есть черновик');
+      throw new BadRequestException();
     }
 
     let imageKey = '';
@@ -97,14 +96,15 @@ export class NutrientsService {
       );
     }
 
-    const nutrient = await this.nutrientsModel.create({
+    const nutrient = this.nutrientsRepository.create({
       ...dto,
       status: 'черновик',
       creatorId: userId,
       imageKey,
       videoKey,
-    } as any);
-
+    });
+    
+    await this.nutrientsRepository.save(nutrient);
     return this.toResponseDto(nutrient, userId);
   }
 
@@ -113,10 +113,10 @@ export class NutrientsService {
     dto: NutrientsPublishDto,
     userId: number,
   ): Promise<NutrientsResponseDto> {
-    const nutrient = await this.nutrientsModel.findOne({
+    const nutrient = await this.nutrientsRepository.findOne({
       where: { id, status: 'черновик', creatorId: userId },
     });
-    if (!nutrient) throw new NotFoundException('Черновик не найден');
+    if (!nutrient) throw new NotFoundException();
 
     nutrient.dailyNorm = dto.dailyNorm;
     nutrient.unit = dto.unit;
@@ -124,37 +124,38 @@ export class NutrientsService {
     nutrient.status = 'опубликован';
     nutrient.formedAt = new Date();
 
-    await nutrient.save();
+    await this.nutrientsRepository.save(nutrient);
     return this.toResponseDto(nutrient, userId);
   }
 
   async softDelete(id: number, userId: number): Promise<void> {
-    const nutrient = await this.nutrientsModel.findOne({
-      where: { id, creatorId: userId, status: { [Op.ne]: 'удален' } },
+    const nutrient = await this.nutrientsRepository.findOne({
+      where: { id, creatorId: userId, status: Not('удален') },
     });
-    if (!nutrient) throw new NotFoundException('Нутриент не найден');
+    if (!nutrient) throw new NotFoundException();
 
     nutrient.status = 'удален';
-    await nutrient.save();
+    await this.nutrientsRepository.save(nutrient);
   }
 
   async toggleLike(nutrientId: number, value: number, userId: number): Promise<void> {
-    const nutrient = await this.nutrientsModel.findOne({
+    const nutrient = await this.nutrientsRepository.findOne({
       where: { id: nutrientId, status: 'опубликован' },
     });
     if (!nutrient) throw new NotFoundException('Нутриент не найден');
 
     if (value === 1) {
-      const existingLike = await this.nutrientsLikeModel.findOne({
+      const existingLike = await this.nutrientsLikeRepository.findOne({
         where: { userId, nutrientId },
       });
       if (!existingLike) {
-        await this.nutrientsLikeModel.create({ userId, nutrientId } as any);
+        const like = this.nutrientsLikeRepository.create({ userId, nutrientId });
+        await this.nutrientsLikeRepository.save(like);
       }
     } else if (value === 0) {
-      await this.nutrientsLikeModel.destroy({ where: { userId, nutrientId } });
+      await this.nutrientsLikeRepository.delete({ userId, nutrientId });
     } else {
-      throw new BadRequestException('Значение лайка должно быть 0 или 1');
+      throw new BadRequestException();
     }
   }
 
@@ -165,13 +166,13 @@ export class NutrientsService {
     const imageUrl = await this.minioService.getSignedUrl(nutrient.imageKey);
     const videoUrl = await this.minioService.getSignedUrl(nutrient.videoKey);
 
-    const likesCount = await this.nutrientsLikeModel.count({
+    const likesCount = await this.nutrientsLikeRepository.count({
       where: { nutrientId: nutrient.id },
     });
 
     let isLiked: 0 | 1 = 0;
     if (userId) {
-      const existingLike = await this.nutrientsLikeModel.findOne({
+      const existingLike = await this.nutrientsLikeRepository.findOne({
         where: { userId, nutrientId: nutrient.id },
       });
       isLiked = existingLike ? 1 : 0;
@@ -181,8 +182,8 @@ export class NutrientsService {
       id: nutrient.id,
       name: nutrient.name,
       description: nutrient.description,
-      dailyNorm: nutrient.dailyNorm,
-      unit: nutrient.unit,
+      dailyNorm: nutrient.dailyNorm ?? 0,  // <-- Если пусто, вернет 0
+      unit: nutrient.unit ?? '',           // <-- Если пусто, вернет пустую строку ""
       imageKey: imageUrl || nutrient.imageKey,
       videoKey: videoUrl || nutrient.videoKey,
       likesCount,
