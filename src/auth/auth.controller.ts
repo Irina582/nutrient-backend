@@ -1,11 +1,12 @@
 import { Body, Controller, Post, Res, Req } from '@nestjs/common';
 import express from 'express';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
-@Controller('api/auth')
+@ApiTags('Users')
+@Controller('api/users')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
@@ -33,11 +34,11 @@ export class AuthController {
   @Post('logout')
   @ApiOperation({ summary: 'Выход из аккаунта (удаление сессии)' })
   async logout(@Req() req: express.Request, @Res() res: express.Response) {
-    const sessionId = req.cookies.sessionId;
+    const sessionId = req.cookies?.sessionId;
     if (sessionId) {
       await this.authService.logout(sessionId);
     }
     res.clearCookie('sessionId');
-    return res.status(200).json({ ok: true });
+    return res.status(204).end();
   }
 }

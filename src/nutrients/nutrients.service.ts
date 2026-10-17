@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, ILike, MoreThanOrEqual, LessThanOrEqual, Not, MoreThan } from 'typeorm';
+import { Repository, Not, MoreThan } from 'typeorm';
 import { Nutrients } from './nutrients.entity';
 import { NutrientsLike } from './nutrients_like.entity';
 import { NutrientsMinioService } from './nutrients_minio.service';
@@ -21,28 +21,36 @@ export class NutrientsService {
 
   async findAll(filters: NutrientsFiltersDto, userId: number | null): Promise<NutrientsResponseDto[]> {
     const qb = this.nutrientsRepository.createQueryBuilder('n');
+
     qb.where('n.status = :status', { status: 'опубликован' });
+
     if (filters.search) {
       qb.andWhere('n.name ILIKE :search', { search: `%${filters.search}%` });
     }
+
     if (filters.minNorm !== undefined) {
       qb.andWhere('n.dailyNorm >= :minNorm', { minNorm: filters.minNorm });
     }
+
     if (filters.maxNorm !== undefined) {
       qb.andWhere('n.dailyNorm <= :maxNorm', { maxNorm: filters.maxNorm });
     }
+
     const nutrients = await qb.getMany();
     return Promise.all(nutrients.map((n_item) => this.toResponseDto(n_item, userId)));
   }
 
-  async findFeed(id: number, next: boolean, userId: number | null): Promise<NutrientsResponseDto> {
+  async findFeed(id: number | undefined, next: boolean, userId: number | null): Promise<NutrientsResponseDto> {
     let nutrient: Nutrients | null = null;
 
     if (next) {
-      nutrient = await this.nutrientsRepository.findOne({
-        where: { status: 'опубликован', id: MoreThan(id) },
-        order: { id: 'ASC' },
-      });
+      if (id !== undefined && !isNaN(id)) {
+        nutrient = await this.nutrientsRepository.findOne({
+          where: { status: 'опубликован', id: MoreThan(id) },
+          order: { id: 'ASC' },
+        });
+      }
+      
       if (!nutrient) {
         nutrient = await this.nutrientsRepository.findOne({
           where: { status: 'опубликован' },
@@ -50,9 +58,11 @@ export class NutrientsService {
         });
       }
     } else {
-      nutrient = await this.nutrientsRepository.findOne({
-        where: { id, status: 'опубликован' },
-      });
+      if (id !== undefined && !isNaN(id)) {
+        nutrient = await this.nutrientsRepository.findOne({
+          where: { id, status: 'опубликован' },
+        });
+      }
     }
 
     if (!nutrient) throw new NotFoundException();
@@ -142,7 +152,7 @@ export class NutrientsService {
     const nutrient = await this.nutrientsRepository.findOne({
       where: { id: nutrientId, status: 'опубликован' },
     });
-    if (!nutrient) throw new NotFoundException('Нутриент не найден');
+    if (!nutrient) throw new NotFoundException();
 
     if (value === 1) {
       const existingLike = await this.nutrientsLikeRepository.findOne({
@@ -182,8 +192,8 @@ export class NutrientsService {
       id: nutrient.id,
       name: nutrient.name,
       description: nutrient.description,
-      dailyNorm: nutrient.dailyNorm ?? 0,  // <-- Если пусто, вернет 0
-      unit: nutrient.unit ?? '',           // <-- Если пусто, вернет пустую строку ""
+      dailyNorm: nutrient.dailyNorm ?? 0,
+      unit: nutrient.unit ?? '',
       imageKey: imageUrl || nutrient.imageKey,
       videoKey: videoUrl || nutrient.videoKey,
       likesCount,

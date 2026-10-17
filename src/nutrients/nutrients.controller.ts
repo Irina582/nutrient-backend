@@ -36,19 +36,27 @@ export class NutrientsController {
     return this.nutrientsService.findAll(filters, userId);
   }
 
-  @Get('feed/:id')
+  @Get('feed')
   @ApiOperation({ summary: 'Получение ленты (открытие карточки или следующей)' })
-  async getFeedById(
-    @Param('id', ParseIntPipe) id: number,
+  async getFeed(
     @Req() req: Request,
-    @Query('next') next?: string,
+    @Query('id') idStr?: string,
+    @Query('next') nextStr?: string,
   ): Promise<NutrientsResponseDto> {
+    if (!idStr && nextStr !== 'true') {
+      throw new BadRequestException(); 
+    }
+
+    const id = idStr ? parseInt(idStr, 10) : undefined;
+    const next = nextStr === 'true';
+
     let userId: number | null = null;
     const sessionId = req.cookies?.sessionId;
     if (sessionId) {
       userId = await this.sessionService.getUserId(sessionId);
     }
-    return this.nutrientsService.findFeed(id, next === 'true', userId);
+    
+    return this.nutrientsService.findFeed(id, next, userId);
   }
 
   @Get('draft')
